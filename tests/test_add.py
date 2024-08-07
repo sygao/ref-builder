@@ -7,6 +7,7 @@ from syrupy.filters import props
 
 from ref_builder.otu import create_otu, update_otu, add_isolate
 from ref_builder.repo import Repo
+from ref_builder.utils import IsolateName, IsolateNameType
 
 
 def run_create_otu_command(
@@ -174,7 +175,7 @@ class TestCreateOTUCommands:
 
 
 class TestAddIsolate:
-    def test_ok(self, precached_repo: Repo):
+    def test_add_ok(self, precached_repo: Repo):
         isolate_1_accessions = ["DQ178610", "DQ178611"]
         isolate_2_accessions = ["DQ178613", "DQ178614"]
 
@@ -190,7 +191,44 @@ class TestAddIsolate:
 
         assert otu.get_isolate(isolate.id).accessions == set(isolate_2_accessions)
 
+    def test_add_isolate_override(self, precached_repo: Repo, snapshot: SnapshotAssertion):
+        """Attempt to add three isolates with mismatching isolate source data
+        with and without the name override option."""
+        schema_accessions = {"MF062136", "MF062137", "MF062138"}
 
+        unformatted_isolate_accessions = {"OR640155", "OR640156", "OR640157"}
+
+        otu = create_otu(
+            precached_repo, 2164102, list(schema_accessions), acronym=""
+        )
+
+        assert otu.accessions == schema_accessions
+
+        isolate = add_isolate(
+            precached_repo,
+            otu,
+            list(unformatted_isolate_accessions)
+        )
+
+        assert isolate is None
+
+        assert otu.accessions == schema_accessions
+
+        isolate = add_isolate(
+            precached_repo,
+            otu,
+            list(unformatted_isolate_accessions),
+            isolate_name=IsolateName(type=IsolateNameType.ISOLATE, value="ARWV1")
+        )
+
+        assert isolate is not None
+
+        otu = precached_repo.get_otu(otu.id)
+
+        assert otu.accessions == schema_accessions | unformatted_isolate_accessions == snapshot
+
+
+@pytest.mark.skip()
 @pytest.mark.ncbi()
 class TestUpdateOTU:
     def test_without_exclusions_ok(

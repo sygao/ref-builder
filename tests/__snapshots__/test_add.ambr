@@ -1,4 +1,14 @@
 # serializer version: 1
+# name: TestAddIsolate.test_add_isolate_override_ok
+  set({
+    'MF062136',
+    'MF062137',
+    'MF062138',
+    'OR640155',
+    'OR640156',
+    'OR640157',
+  })
+# ---
 # name: TestCreateOTU.test_empty_success
   dict({
     'acronym': '',
@@ -86,36 +96,4 @@
     }),
     'taxid': 345184,
   })
-# ---
-# name: TestUpdateOTU.test_without_exclusions_ok
-  list([
-    dict({
-      'acronym': '',
-      'excluded_accessions': list([
-      ]),
-      'legacy_id': None,
-      'name': 'Cabbage leaf curl Jamaica virus',
-      'schema': dict({
-        'molecule': dict({
-          'strandedness': 'double',
-          'topology': 'circular',
-          'type': 'DNA',
-        }),
-        'multipartite': True,
-        'segments': list([
-          dict({
-            'length': 2575,
-            'name': 'DNA-A',
-            'required': True,
-          }),
-          dict({
-            'length': 2494,
-            'name': 'DNA-B',
-            'required': True,
-          }),
-        ]),
-      }),
-      'taxid': 345184,
-    }),
-  ])
 # ---
