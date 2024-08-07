@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestAddIsolate.test_add_isolate_override_ok
+# name: TestAddIsolate.test_add_isolate_override
   set({
     'MF062136',
     'MF062137',
@@ -96,4 +96,41 @@
     }),
     'taxid': 345184,
   })
+# ---
+# name: TestUpdateOTU.test_without_exclusions_ok
+  list([
+    dict({
+      'acronym': '',
+      'excluded_accessions': list([
+      ]),
+      'legacy_id': None,
+      'name': 'Apple rubbery wood virus 1',
+      'schema': dict({
+        'molecule': dict({
+          'strandedness': 'single',
+          'topology': 'linear',
+          'type': 'RNA',
+        }),
+        'multipartite': True,
+        'segments': list([
+          dict({
+            'length': 7219,
+            'name': 'L',
+            'required': True,
+          }),
+          dict({
+            'length': 1613,
+            'name': 'M',
+            'required': True,
+          }),
+          dict({
+            'length': 1291,
+            'name': 'S',
+            'required': True,
+          }),
+        ]),
+      }),
+      'taxid': 2164102,
+    }),
+  ])
 # ---
