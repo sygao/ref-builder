@@ -8,7 +8,7 @@ from ref_builder.models import Molecule
 from ref_builder.ncbi.client import NCBIClient
 from ref_builder.ncbi.models import NCBIGenbank
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoOTU, RepoSequence
+from ref_builder.resources import RepoOTU, RepoIsolate, RepoSequence
 from ref_builder.schema import OTUSchema, Segment
 from ref_builder.utils import Accession, IsolateName, IsolateNameType
 
@@ -169,8 +169,9 @@ def add_isolate(
     repo: Repo,
     otu: RepoOTU,
     accessions: list[str],
-    ignore_cache: bool = False
-) -> None:
+    isolate_name: IsolateName | None = None,
+    ignore_cache: bool = False,
+) -> RepoIsolate | None:
     """Take a list of accessions that make up a new isolate and add them to the OTU."""
     ncbi = NCBIClient(ignore_cache)
 
@@ -189,13 +190,21 @@ def add_isolate(
 
     records = ncbi.fetch_genbank_records(fetch_list)
 
-    record_bins = group_genbank_records_by_isolate(records)
-    if len(record_bins) != 1:
-        otu_logger.warning("More than one isolate name found in requested accession.")
-        # Override later
-        return
+    if isolate_name is not None:
+        otu_logger.debug(f"Overriding record source information with {isolate_name}.")
 
-    isolate_name, isolate_records = list(record_bins.items())[0]
+        isolate_records = records
+
+    else:
+        record_bins = group_genbank_records_by_isolate(records)
+        if len(record_bins) != 1:
+            otu_logger.error(
+                "More than one potential isolate name found in requested accession."
+            )
+            return
+
+        isolate_name, isolate_records = list(record_bins.items())[0]
+        isolate_records = list(isolate_records.values())
 
     if len(isolate_records) != len(otu.schema.segments):
         otu_logger.error(
@@ -205,7 +214,7 @@ def add_isolate(
         return
 
     return create_isolate(
-        repo, otu, isolate_name, list(isolate_records.values())
+        repo, otu, isolate_name, isolate_records
     )
 
 
@@ -214,7 +223,7 @@ def create_isolate(
     otu: RepoOTU,
     isolate_name: IsolateName,
     records: list[NCBIGenbank],
-):
+) -> RepoIsolate:
     """Take a list of records that make up a new isolate and add them to the OTU."""
     isolate_logger = structlog.get_logger("otu.isolate").bind(
         isolate_name=str(isolate_name),
@@ -247,7 +256,7 @@ def create_isolate(
         sequences=sorted([str(record.accession) for record in records]),
     )
 
-    return isolate
+    return repo.get_otu(otu.id).get_isolate(isolate.id)
 
 
 def build_sequence(record: NCBIGenbank):
