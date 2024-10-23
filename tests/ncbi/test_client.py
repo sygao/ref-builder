@@ -123,6 +123,15 @@ class TestFetchAccessionsByTaxid:
         """Test that the client returns an empty list when the taxid does not exist."""
         assert NCBIClient.fetch_accessions_by_taxid(99999999) == []
 
+    def test_fetch_subordinate_taxid_accessions(self):
+        """Test that all the accessions labelled as belonging to a nested subspecies level OTU
+        are included in the parent's accessions."""
+        child_accessions = set(NCBIClient.fetch_accessions_by_taxid(2164102))
+
+        parent_accessions = set(NCBIClient.fetch_accessions_by_taxid(2734484))
+
+        assert child_accessions.issubset(parent_accessions)
+
 
 class TestFetchTaxonomy:
     @pytest.mark.ncbi()
