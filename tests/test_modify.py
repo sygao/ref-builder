@@ -309,7 +309,7 @@ class TestPromoteAccessions:
     def test_ok(self, empty_repo: Repo):
         """Test that RefSeq accessions can be promoted automatically."""
         otu = create_otu(
-            empty_repo, 2164102, ["MF062136", "MF062137", "MF062138"], acronym=""
+            empty_repo, 2734484, ["MF062136", "MF062137", "MF062138"], acronym=""
         )
         isolate = add_genbank_isolate(
             empty_repo, otu, ["MF062125", "MF062126", "MF062127"]
@@ -358,8 +358,10 @@ class TestPromoteAccessions:
         assert otu_after.excluded_accessions == {"MF062125", "MF062126", "MF062127"}
 
     def test_command_ok(self, empty_repo: Repo):
+        taxid = 2734484
+
         otu = create_otu(
-            empty_repo, 2164102, ["MF062125", "MF062126", "MF062127"], acronym=""
+            empty_repo, taxid, ["MF062125", "MF062126", "MF062127"], acronym=""
         )
 
         otu_before = empty_repo.get_otu(otu.id)
@@ -373,7 +375,7 @@ class TestPromoteAccessions:
                 "update",
             ]
             + ["--path", str(empty_repo.path)]
-            + [str(2164102)]
+            + [str(taxid)]
             + ["promote"],
             check=False,
         )

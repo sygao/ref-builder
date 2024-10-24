@@ -156,6 +156,7 @@ class TestCreateOTU:
                     "name": None,
                     "plan_type": "monopartite",
                 },
+                "subordinates": None,
                 "taxid": 12242,
             },
             "id": 2,

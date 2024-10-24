@@ -8,7 +8,7 @@ def test_list_otus(scratch_repo: Repo):
     print_otu_list(scratch_repo.iter_minimal_otus())
 
 
-@pytest.mark.parametrize("taxid", [345184, 3158377])
+@pytest.mark.parametrize("taxid", [345184, 438782])
 def test_print_otu(scratch_repo: Repo, taxid: int):
     otu = scratch_repo.get_otu_by_taxid(taxid)
 
