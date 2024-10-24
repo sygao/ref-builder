@@ -1,8 +1,10 @@
+from uuid import uuid4
 import sys
 
 import structlog
 
 from ref_builder.ncbi.client import NCBIClient
+from ref_builder.ncbi.models import NCBIGenbank
 from ref_builder.otu.utils import (
     create_isolate_plan_from_records,
     group_genbank_records_by_isolate,
@@ -10,7 +12,7 @@ from ref_builder.otu.utils import (
     parse_refseq_comment,
 )
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoOTU
+from ref_builder.resources import RepoOTU, OTUMetadata
 
 logger = structlog.get_logger("otu.create")
 
@@ -22,9 +24,12 @@ def create_otu(
     acronym: str,
     ignore_cache: bool = False,
 ) -> RepoOTU | None:
-    """Create a new OTU by taxonomy ID and autogenerate a schema.
+    """Create a new OTU by species-level taxonomy ID and autogenerate a schema.
 
     Uses the provided accessions to generate a schema and add a first isolate.
+
+    If the taxonomy ID is sub species-level, uses the species-level metadata.
+    The given taxonomy ID is made subordinate.
 
     :param repo: the repository to add the OTU to.
     :param taxid: the taxonomy ID to use.
@@ -42,9 +47,7 @@ def create_otu(
             f"Taxonomy ID {taxid} has already been added to this reference.",
         )
 
-    taxonomy = client.fetch_taxonomy_record(taxid)
-
-    if taxonomy is None:
+    if (taxonomy := client.fetch_taxonomy_record(taxid)) is None:
         otu_logger.fatal(f"Could not retrieve {taxid} from NCBI Taxonomy")
         return None
 
@@ -56,6 +59,54 @@ def create_otu(
     if len(records) != len(accessions):
         otu_logger.fatal("Could not retrieve all requested accessions.")
         return None
+
+    if taxonomy.species.id == taxid:
+        return construct_otu(
+            repo=repo,
+            taxid=taxid,
+            name=taxonomy.name,
+            acronym=acronym,
+            records=records,
+            subordinates=None,
+        )
+
+    else:
+        subordinates = [
+            OTUMetadata(
+                id=uuid4(),
+                acronym=acronym,
+                legacy_id=None,
+                name=taxonomy.name,
+                taxid=taxid,
+            ),
+        ]
+        taxid = taxonomy.species.id
+        name = taxonomy.species.name
+
+        otu_logger = logger.bind(taxid=taxid, name=name, subordinates=subordinates)
+
+        otu_logger.info(f"Set OTU level data to species level ({taxid})")
+
+        return construct_otu(
+            repo=repo,
+            taxid=taxid,
+            name=name,
+            acronym=acronym,
+            records=records,
+            subordinates=subordinates,
+        )
+
+
+def construct_otu(
+    repo: Repo,
+    taxid: int,
+    name: str,
+    acronym: str,
+    records: list[NCBIGenbank],
+    subordinates: dict[OTUMetadata] | None = None,
+):
+    """Create an OTU from the given OTU metadata and records."""
+    otu_logger = logger.bind(taxid=taxid, accessions=[record.accession_version for record in records])
 
     binned_records = group_genbank_records_by_isolate(records)
 
@@ -78,8 +129,9 @@ def create_otu(
             acronym=acronym,
             legacy_id=None,
             molecule=molecule,
-            name=taxonomy.name,
+            name=name,
             plan=plan,
+            subordinates=subordinates,
             taxid=taxid,
         )
     except ValueError as e:

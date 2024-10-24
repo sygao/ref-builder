@@ -71,7 +71,7 @@ from ref_builder.resources import (
     RepoMeta,
     RepoOTU,
     RepoSequence,
-    RepoSettings,
+    RepoSettings, OTUMetadata,
 )
 from ref_builder.utils import (
     Accession,
@@ -219,6 +219,7 @@ class Repo:
         name: str,
         plan: MonopartitePlan | MultipartitePlan,
         taxid: int,
+        subordinates: list[OTUMetadata] | None = None,
     ) -> RepoOTU | None:
         """Create an OTU."""
         if (otu_id := self.get_otu_id_by_taxid(taxid)) is not None:
@@ -247,6 +248,7 @@ class Repo:
                 molecule=molecule,
                 name=name,
                 plan=plan,
+                subordinates=subordinates,
                 taxid=taxid,
             ),
             OTUQuery(otu_id=otu_id),
@@ -558,6 +560,7 @@ class Repo:
             name=event.data.name,
             repr_isolate=None,
             plan=event.data.plan,
+            subordinates=event.data.subordinates,
             taxid=event.data.taxid,
         )
 

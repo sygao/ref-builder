@@ -3,6 +3,7 @@ from pydantic import UUID4
 from ref_builder.events.base import EventData, Event, OTUQuery
 from ref_builder.models import Molecule
 from ref_builder.plan import MonopartitePlan, MultipartitePlan
+from ref_builder.resources import OTUMetadata
 
 
 class CreateOTUData(EventData):
@@ -13,8 +14,9 @@ class CreateOTUData(EventData):
     legacy_id: str | None
     molecule: Molecule
     name: str
-    taxid: int
     plan: MonopartitePlan | MultipartitePlan
+    subordinates: list[OTUMetadata] | None
+    taxid: int
 
 
 class CreateOTU(Event):
