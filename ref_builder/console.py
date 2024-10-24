@@ -50,6 +50,23 @@ def print_otu(otu: RepoOTU) -> None:
 
     console.print(table)
 
+    if otu.subordinates is not None:
+        console.line()
+        console.print("[bold]SUBORDINATE TAXA[/bold]")
+        console.line()
+
+        subordinate_table = Table(box=None)
+
+        subordinate_table.add_column("TAXID")
+        subordinate_table.add_column("NAME")
+
+        for sub_taxa in otu.subordinates:
+            subordinate_table.add_row(str(sub_taxa.taxid), sub_taxa.name.capitalize())
+            console.line()
+
+        console.print(subordinate_table)
+        console.line()
+
     console.line()
     console.print("[bold]SCHEMA[/bold]")
     console.line()
