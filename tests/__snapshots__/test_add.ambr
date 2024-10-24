@@ -32,6 +32,7 @@
         }),
       ]),
     }),
+    'subordinates': None,
     'taxid': 345184,
   })
 # ---
@@ -63,6 +64,7 @@
       'name': None,
       'plan_type': 'monopartite',
     }),
+    'subordinates': None,
     'taxid': 1278205,
   })
 # ---
@@ -99,6 +101,7 @@
         }),
       ]),
     }),
+    'subordinates': None,
     'taxid': 345184,
   })
 # ---
