@@ -209,17 +209,13 @@ class RepoIsolate(IsolateSnapshot):
         return None
 
 
-class RepoOTU(BaseModel):
-    """Represents an OTU in a Virtool reference repository."""
-
+class OTUMetadata(BaseModel):
+    """Represents the metadata of an OTU."""
     id: UUID4
     """The OTU id."""
 
     acronym: str
     """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
-
-    excluded_accessions: set[str]
-    """A set of accessions that should not be retrieved in future fetch operations."""
 
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository."""
@@ -227,8 +223,15 @@ class RepoOTU(BaseModel):
     name: str
     """The name of the OTU (eg. TMV for Tobacco mosaic virus)"""
 
-    repr_isolate: UUID4 | None
-    """The UUID of the representative isolate of this OTU"""
+    taxid: int
+    """The NCBI Taxonomy id for this OTU."""
+
+
+class RepoOTU(OTUMetadata):
+    """Represents an OTU in a Virtool reference repository."""
+
+    excluded_accessions: set[str]
+    """A set of accessions that should not be retrieved in future fetch operations."""
 
     molecule: Molecule
     """The type of molecular information contained in this OTU."""
@@ -236,8 +239,8 @@ class RepoOTU(BaseModel):
     plan: Plan
     """The schema of the OTU"""
 
-    taxid: int
-    """The NCBI Taxonomy id for this OTU."""
+    repr_isolate: UUID4 | None
+    """The UUID of the representative isolate of this OTU"""
 
     isolates: list[RepoIsolate]
     """Isolates contained in this OTU."""
