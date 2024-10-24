@@ -61,11 +61,9 @@ def print_otu(otu: RepoOTU) -> None:
         subordinate_table.add_column("NAME")
 
         for sub_taxa in otu.subordinates:
-            subordinate_table.add_row(str(sub_taxa.taxid), sub_taxa.name.capitalize())
-            console.line()
+            subordinate_table.add_row(_render_taxonomy_id_link(sub_taxa.taxid), sub_taxa.name.capitalize())
 
         console.print(subordinate_table)
-        console.line()
 
     console.line()
     console.print("[bold]SCHEMA[/bold]")
