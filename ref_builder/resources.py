@@ -251,6 +251,9 @@ class RepoOTU(OTUMetadata):
     _sequences_by_id: dict[UUID4:RepoSequence]
     """A dictionary of sequences indexed by sequence UUID"""
 
+    subordinates: list[OTUMetadata] | None = None
+    """Subordinate taxa contained by this OTU."""
+
     def __init__(self, **data) -> None:
         super().__init__(**data)
 
