@@ -51,6 +51,25 @@ def run_update_otu_command(taxid: int, path: Path):
 
 
 class TestCreateOTU:
+    def test_create_from_subordinate_taxid(self, precached_repo):
+        """Test that an OTU created using a non-species level TAXID correctly upgrades
+        the OTU to the species-level TAXID.
+        """
+        subordinate_taxid = 2164102
+        species_taxid = 2734484
+
+        otu = create_otu(
+            precached_repo,
+            taxid=subordinate_taxid,
+            accessions=["NC_055390", "NC_055391", "NC_055392"],
+            acronym="",
+        )
+
+        assert otu.taxid == species_taxid
+
+        assert otu.subordinates[0].taxid == subordinate_taxid
+
+
     def test_duplicate_accessions(self, precached_repo: Repo):
         """Test that an error is raised when duplicate accessions are provided."""
         runner = CliRunner()
