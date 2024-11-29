@@ -4,7 +4,8 @@ import uuid
 
 import pytest
 
-from ref_builder.otu.models import OTU, OTUBase
+from ref_builder.otu.models import OTU
+from ref_builder.resources.base import OTUBase
 from tests.fixtures.factories import OTUFactory
 
 
