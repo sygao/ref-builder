@@ -2,7 +2,7 @@ import datetime
 
 from pydantic import BaseModel, computed_field, UUID4
 
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 
 
 class EventQuery(BaseModel):

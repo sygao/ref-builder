@@ -7,7 +7,7 @@ import pytest
 
 from ref_builder.index import EventIndexItem, Index
 from ref_builder.models import OTUMinimal
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 
 SNAPSHOT_AT_EVENT = (
     31,

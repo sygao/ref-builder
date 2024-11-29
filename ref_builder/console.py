@@ -5,7 +5,7 @@ from rich.table import Table
 
 from ref_builder.models import OTUMinimal
 from ref_builder.plan import Plan, SegmentRule
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 
 
 def _render_taxonomy_id_link(taxid: int) -> str:

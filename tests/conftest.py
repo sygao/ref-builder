@@ -18,7 +18,7 @@ from ref_builder.ncbi.client import NCBIClient
 from ref_builder.otu.create import create_otu
 from ref_builder.otu.update import update_otu_with_accessions
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 from ref_builder.utils import Accession, DataType
 from tests.fixtures.factories import (
     IsolateFactory,

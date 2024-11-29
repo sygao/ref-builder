@@ -3,8 +3,9 @@ from uuid import UUID
 
 from pydantic import UUID4, Field, model_validator
 
-from ref_builder.resources import RepoIsolate, RepoSequence
-from ref_builder.resources.base import IsolateBase, OTUBase
+from ref_builder.resources.sequence import RepoSequence
+from ref_builder.resources.isolate import IsolateBase, RepoIsolate
+from ref_builder.resources.otu import OTUBase
 
 
 class Isolate(IsolateBase):

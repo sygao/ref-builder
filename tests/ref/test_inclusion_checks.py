@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 from faker import Faker
 
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 from ref_builder.ncbi.models import NCBIGenbank
 from ref_builder.otu.isolate import (
     create_monopartite_isolate,

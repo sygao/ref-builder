@@ -11,7 +11,7 @@ from uuid import UUID
 import orjson
 
 from ref_builder.models import OTUMinimal
-from ref_builder.resources import RepoOTU
+from ref_builder.resources.otu import RepoOTU
 
 
 @dataclass

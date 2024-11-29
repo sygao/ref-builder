@@ -1,16 +1,9 @@
 from typing import Annotated
-from pydantic import (
-    UUID4,
-    BaseModel,
-    Field,
-    field_serializer,
-    field_validator,
-)
+from pydantic import Field, BaseModel, UUID4, field_serializer, field_validator
 
 from ref_builder.models import Molecule
 from ref_builder.plan import Plan
-from ref_builder.utils import Accession, IsolateName
-
+from ref_builder.utils import IsolateName, Accession
 
 LegacyId = Annotated[str, Field(pattern=r"\w{8}")]
 

@@ -9,9 +9,9 @@ from ref_builder.plan import Plan, Segment, SegmentRule
 from ref_builder.repo import Repo
 from ref_builder.resources import (
     RepoIsolate,
-    RepoOTU,
     RepoSequence,
 )
+from ref_builder.resources.otu import RepoOTU
 from ref_builder.utils import Accession, DataType, IsolateName, IsolateNameType
 
 

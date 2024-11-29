@@ -13,7 +13,8 @@ from ref_builder.plan import (
     SegmentRule,
 )
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoOTU, RepoSequence
+from ref_builder.resources import RepoSequence
+from ref_builder.resources.otu import RepoOTU
 
 logger = get_logger("otu.modify")
 

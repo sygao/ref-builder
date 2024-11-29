@@ -69,10 +69,10 @@ from ref_builder.plan import Plan
 from ref_builder.resources import (
     RepoIsolate,
     RepoMeta,
-    RepoOTU,
     RepoSequence,
     RepoSettings,
 )
+from ref_builder.resources.otu import RepoOTU
 from ref_builder.utils import (
     Accession,
     ExcludedAccessionAction,
