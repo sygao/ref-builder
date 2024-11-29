@@ -41,7 +41,7 @@ def test_print_otu(snapshot: SnapshotAssertion):
         id=fake.uuid4(),
         acronym="BabAV",
         excluded_accessions=set(),
-        legacy_id="",
+        legacy_id=None,
         molecule=Molecule(
             strandedness=Strandedness.SINGLE, topology=Topology.LINEAR, type=MolType.RNA
         ),
