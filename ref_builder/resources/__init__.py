@@ -1,11 +1,12 @@
 import datetime
 from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, UUID4, Field, field_validator, field_serializer
 
 from ref_builder.models import Molecule
 from ref_builder.plan import Plan
-from ref_builder.utils import Accession, DataType, IsolateName
+
+from ref_builder.utils import DataType, Accession, IsolateName
 
 
 class RepoMeta(BaseModel):
