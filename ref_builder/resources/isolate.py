@@ -43,7 +43,7 @@ class IsolateBase(IsolateModel):
         return None
 
 
-class RepoIsolate(IsolateModel):
+class RepoIsolate(IsolateBase):
     """Represents an isolate in a Virtool reference repository."""
 
     sequences: list[RepoSequence]

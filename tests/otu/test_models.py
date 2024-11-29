@@ -38,7 +38,8 @@ class TestOTU:
     def test_no_isolates(self):
         """Test that validation fails if the OTU has no isolates."""
         self.otu.isolates = []
-        self.otu.sequences = []
+
+        assert not self.otu.sequences
 
         with pytest.raises(
             ValueError, match="List should have at least 1 item after validation, not 0"

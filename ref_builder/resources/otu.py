@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import UUID4
+from pydantic import UUID4, computed_field
 
 from ref_builder.resources.models import OTUModel
 from ref_builder.resources.isolate import RepoIsolate, IsolateBase
@@ -20,11 +20,12 @@ class OTUBase(OTUModel):
     representative_isolate: UUID4 | None
     """The UUID of the representative isolate of this OTU"""
 
-    sequences: list[RepoSequence]
-    """Sequences contained in this OTU."""
+    @property
+    def sequences(self) -> list[RepoSequence]:
+        return [sequence for isolate in self.isolates for sequence in isolate.sequences]
 
 
-class RepoOTU(OTUModel):
+class RepoOTU(OTUBase):
     """Represents an OTU in a Virtool reference repository."""
 
     excluded_accessions: set[str]

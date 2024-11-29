@@ -437,7 +437,6 @@ class OTUFactory(ModelFactory[OTUBase]):
         """Derive a representative isolate from a list of OTUs."""
         return cls.__faker__.random_element(isolates).id
 
-    @post_generated
     @classmethod
     def sequences(cls, isolates: list[RepoIsolate]) -> list[RepoSequence]:
         """Derive a list of sequences from a list of isolates."""
