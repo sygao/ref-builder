@@ -1,12 +1,10 @@
 import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, UUID4, Field, field_validator, field_serializer
+from pydantic import BaseModel, UUID4, Field
 
-from ref_builder.models import Molecule
-from ref_builder.plan import Plan
-
-from ref_builder.utils import DataType, Accession, IsolateName
+from ref_builder.resources.models import IsolateModel, OTUModel, SequenceModel
+from ref_builder.utils import DataType, IsolateName
 
 
 class RepoMeta(BaseModel):
@@ -35,95 +33,11 @@ class RepoSettings(BaseModel):
     """The deviation a sequence is allowed from its plan segment's length before it fails validation."""
 
 
-class RepoSequence(BaseModel):
+class RepoSequence(SequenceModel):
     """Represents a sequence in a Virtool reference repository."""
 
-    id: UUID4
-    """The sequence id."""
 
-    accession: Accession
-    """The sequence accession."""
-
-    definition: str
-    """The sequence definition."""
-
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository.
-
-    It the sequence was not migrated from a legacy repository, this will be `None`.
-    """
-
-    sequence: str
-    """The sequence."""
-
-    segment: str
-    """The sequence segment."""
-
-    @field_validator("accession", mode="before")
-    @classmethod
-    def convert_accession(cls: "RepoSequence", value: Accession | str) -> Accession:
-        """Convert the accession to an Accession object."""
-        if isinstance(value, Accession):
-            return value
-
-        if isinstance(value, str):
-            return Accession.from_string(value)
-
-        raise ValueError(f"Invalid type for accession: {type(value)}")
-
-    @field_serializer("accession")
-    @classmethod
-    def serialize_accession(self, accession: Accession) -> str:
-        """Serialize the accession to a string."""
-        return str(accession)
-
-
-class IsolateSnapshot(BaseModel):
-    """Represents the metadata of an isolate as would exist in snapshot file data."""
-
-    id: UUID4
-    """The isolate id."""
-
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository.
-
-    It the isolate was not migrated from a legacy repository, this will be `None`.
-    """
-
-    name: IsolateName | None
-    """The isolate's source name metadata."""
-
-    @field_serializer("name")
-    def serialize_name(self, name: IsolateName | None) -> dict[str, str] | None:
-        """Serialize the isolate name."""
-        if name is None:
-            return None
-
-        return {
-            "type": name.type,
-            "value": name.value,
-        }
-
-    @field_validator("name", mode="before")
-    @classmethod
-    def convert_name(
-        cls: "RepoIsolate",
-        value: dict | IsolateName | None,
-    ) -> IsolateName | None:
-        """Convert the name to an IsolateName object."""
-        if value is None:
-            return value
-
-        if isinstance(value, IsolateName):
-            return value
-
-        if isinstance(value, dict):
-            return IsolateName(**value)
-
-        raise ValueError(f"Invalid type for name: {type(value)}")
-
-
-class RepoIsolate(IsolateSnapshot):
+class RepoIsolate(IsolateModel):
     """Represents an isolate in a Virtool reference repository."""
 
     sequences: list[RepoSequence]
@@ -210,35 +124,14 @@ class RepoIsolate(IsolateSnapshot):
         return None
 
 
-class RepoOTU(BaseModel):
+class RepoOTU(OTUModel):
     """Represents an OTU in a Virtool reference repository."""
-
-    id: UUID4
-    """The OTU id."""
-
-    acronym: str
-    """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
     excluded_accessions: set[str]
     """A set of accessions that should not be retrieved in future fetch operations."""
 
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository."""
-
-    name: str
-    """The name of the OTU (eg. TMV for Tobacco mosaic virus)"""
-
     representative_isolate: UUID4 | None
     """The UUID of the representative isolate for the OTU."""
-
-    molecule: Molecule
-    """The type of molecular information contained in this OTU."""
-
-    plan: Plan
-    """The schema of the OTU"""
-
-    taxid: int
-    """The NCBI Taxonomy id for this OTU."""
 
     isolates: list[RepoIsolate]
     """Isolates contained in this OTU."""
