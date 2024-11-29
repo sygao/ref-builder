@@ -1,28 +1,15 @@
 from collections import Counter
 from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field, model_validator
+from pydantic import UUID4, Field, model_validator
 
-from ref_builder.models import Molecule
-from ref_builder.plan import Plan
 from ref_builder.resources import RepoIsolate, RepoSequence
-from ref_builder.utils import Accession, IsolateName
+from ref_builder.resources.models import IsolateModel, OTUModel
+from ref_builder.utils import Accession
 
 
-class IsolateBase(BaseModel):
+class IsolateBase(IsolateModel):
     """A class representing an isolate with basic validation."""
-
-    id: UUID4
-    """The isolate id."""
-
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository.
-
-    It the isolate was not migrated from a legacy repository, this will be `None`.
-    """
-
-    name: IsolateName | None
-    """The isolate's name."""
 
     sequences: list[RepoSequence]
     """The isolates sequences."""
@@ -69,14 +56,8 @@ class Isolate(IsolateBase):
     """
 
 
-class OTUBase(BaseModel):
+class OTUBase(OTUModel):
     """A class representing an OTU with basic validation."""
-
-    id: UUID4
-    """The OTU id."""
-
-    acronym: str
-    """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
     excluded_accessions: set[str]
     """A set of accessions that should not be retrieved in future fetch operations."""
@@ -84,26 +65,11 @@ class OTUBase(BaseModel):
     isolates: list[IsolateBase]
     """Isolates contained in this OTU."""
 
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository."""
-
-    molecule: Molecule
-    """The type of molecular information contained in this OTU."""
-
-    name: str
-    """The name of the OTU (eg. TMV for Tobacco mosaic virus)"""
-
-    plan: Plan
-    """The schema of the OTU"""
-
     representative_isolate: UUID4 | None
     """The UUID of the representative isolate of this OTU"""
 
     sequences: list[RepoSequence]
     """Sequences contained in this OTU."""
-
-    taxid: int
-    """The NCBI Taxonomy id for this OTU."""
 
 
 class OTU(OTUBase):
