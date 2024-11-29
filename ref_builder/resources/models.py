@@ -1,3 +1,4 @@
+from typing import Annotated
 from pydantic import (
     UUID4,
     BaseModel,
@@ -9,6 +10,9 @@ from pydantic import (
 from ref_builder.models import Molecule
 from ref_builder.plan import Plan
 from ref_builder.utils import Accession, IsolateName
+
+
+LegacyId = Annotated[str, Field(pattern=r"\w{8}")]
 
 
 class SequenceModel(BaseModel):
@@ -23,7 +27,7 @@ class SequenceModel(BaseModel):
     definition: str
     """The sequence definition."""
 
-    legacy_id: str | None
+    legacy_id: LegacyId | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
     It the sequence was not migrated from a legacy repository, this will be `None`.
@@ -60,7 +64,7 @@ class IsolateModel(BaseModel):
     id: UUID4
     """The isolate id."""
 
-    legacy_id: str | None
+    legacy_id: LegacyId | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
     It the isolate was not migrated from a legacy repository, this will be `None`.
@@ -105,7 +109,7 @@ class OTUModel(BaseModel):
     acronym: str
     """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    legacy_id: str | None
+    legacy_id: LegacyId | None
     """A string based ID carried over from a legacy Virtool reference repository."""
 
     name: str
