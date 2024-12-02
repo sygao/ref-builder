@@ -9,7 +9,7 @@ class IsolateBase(IsolateModel):
     """A class representing an isolate with basic validation."""
 
     sequences: list[RepoSequence]
-    """The isolates sequences."""
+    """The isolate's sequences."""
 
     def get_sequence_by_accession(
         self,
@@ -45,8 +45,6 @@ class IsolateBase(IsolateModel):
 
 class RepoIsolate(IsolateBase):
     """Represents an isolate in a Virtool reference repository."""
-
-    sequences: list[RepoSequence]
 
     _sequences_by_accession: dict[str, RepoSequence] = {}
     """A dictionary of sequences indexed by accession"""
