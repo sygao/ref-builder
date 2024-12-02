@@ -70,12 +70,10 @@ class RepoIsolate(IsolateBase):
 
     def add_sequence(self, sequence: RepoSequence) -> None:
         """Add a sequence to the isolate."""
-        self.sequences.append(
-            sequence,
-        )
+        self.sequences.append(sequence)
 
         self._sequences_by_accession[sequence.accession.key] = sequence
-        self._sequences_by_id[sequence.id] = sequence
+        self._sequences_by_id[sequence.id] = self._sequences_by_accession[sequence.accession.key]
 
     def replace_sequence(
         self,
@@ -85,11 +83,6 @@ class RepoIsolate(IsolateBase):
         """Replace a sequence with the given ID with a new sequence."""
         self.add_sequence(sequence)
         self.delete_sequence(replaced_sequence_id)
-
-        self._sequences_by_accession[sequence.accession.key] = sequence
-        self._sequences_by_id[sequence.id] = sequence
-
-        self._update_sequence_lookups()
 
     def delete_sequence(self, sequence_id: UUID) -> None:
         """Delete a sequence from a given isolate."""
