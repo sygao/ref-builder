@@ -66,7 +66,7 @@ class RepoIsolate(IsolateBase):
     @property
     def sequence_ids(self) -> set[UUID]:
         """A set of UUIDs for sequences in the isolate."""
-        return {sequence.id for sequence in self.sequences}
+        return set(self._sequences_by_id.keys())
 
     def add_sequence(self, sequence: RepoSequence) -> None:
         """Add a sequence to the isolate."""
