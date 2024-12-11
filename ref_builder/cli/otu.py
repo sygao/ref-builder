@@ -136,26 +136,11 @@ def otu_subcommand_factory(group, name: str, help_text: str):
     return entry_point
 
 
-@otu.group(invoke_without_command=True)
-@click.argument("TAXID", type=int)
-@path_option
-@click.pass_context
-def update(ctx: Context, path: Path, taxid: int) -> None:
-    """Update the specified OTU with new data."""
-    repo = Repo(path)
-
-    ctx.ensure_object(dict)
-    ctx.obj = {
-        "REPO": repo,
-        "TAXID": taxid,
-    }
-
-    if not repo.get_otu_id_by_taxid(taxid):
-        click.echo(f"OTU {taxid} not found.", err=True)
-        sys.exit(1)
-
-    if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
+update = otu_subcommand_factory(
+    group=otu,
+    name="update",
+    help="Update the specified OTU with new data."
+)
 
 
 @update.command(name="automatic")  # type: ignore
