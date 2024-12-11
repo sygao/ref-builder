@@ -159,7 +159,10 @@ def otu_promote_accessions(
     promote_otu_accessions(repo, otu_, ignore_cache)
 
 
-@update.command(name="isolate")  # type: ignore
+@update.command(
+    name="add-isolate",
+    epilog="e.g. ref-builder otu update add-isolate OR525832 OR525833 OR525834",
+)  # type: ignore
 @click.argument(
     "accessions_",
     callback=validate_no_duplicate_accessions,
@@ -188,7 +191,7 @@ def isolate_create(
     name: tuple[IsolateNameType, str] | None,
     unnamed: bool,
 ) -> None:
-    """Create a new isolate using the given accessions."""
+    """Create a new isolate using given ACCESSIONS."""
     repo = ctx.obj["REPO"]
     taxid = ctx.obj["TAXID"]
 
@@ -242,7 +245,29 @@ def isolate_create(
         sys.exit(1)
 
 
-@update.command(name="exclude")  # type: ignore
+@otu.group(invoke_without_command=True)
+@click.argument("TAXID", type=int)
+@path_option
+@click.pass_context
+def modify(ctx: Context, path: Path, taxid: int) -> None:
+    """Modify the specified OTU."""
+    repo = Repo(path)
+
+    ctx.ensure_object(dict)
+    ctx.obj = {
+        "REPO": repo,
+        "TAXID": taxid,
+    }
+
+    if not repo.get_otu_id_by_taxid(taxid):
+        click.echo(f"OTU {taxid} not found.", err=True)
+        sys.exit(1)
+
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@modify.command(name="exclude")  # type: ignore
 @click.argument(
     "accessions_",
     metavar="ACCESSIONS",
@@ -272,7 +297,7 @@ def accession_exclude(
     exclude_accessions_from_otu(repo, otu_, accessions_)
 
 
-@update.command(name="default")  # type: ignore
+@modify.command(name="default")  # type: ignore
 @click.argument("ISOLATE_KEY", type=str)
 @click.pass_context
 def otu_set_representative_isolate(
@@ -309,10 +334,26 @@ def otu_set_representative_isolate(
     set_representative_isolate(repo, otu_, isolate_id)
 
 
-@update.group()
+@otu.group(invoke_without_command=True)
+@click.argument("TAXID", type=int)
+@path_option
 @click.pass_context
-def plan(ctx: Context) -> None:
-    """Add to and replace isolate plans for this OTU."""
+def plan(ctx: Context, path: Path, taxid: int) -> None:
+    """Modify the isolate plan of this OTU."""
+    repo = Repo(path)
+
+    ctx.ensure_object(dict)
+    ctx.obj = {
+        "REPO": repo,
+        "TAXID": taxid,
+    }
+
+    if not repo.get_otu_id_by_taxid(taxid):
+        click.echo(f"OTU {taxid} not found.", err=True)
+        sys.exit(1)
+
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @plan.command(name="extend")
