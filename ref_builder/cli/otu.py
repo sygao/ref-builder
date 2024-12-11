@@ -108,7 +108,7 @@ def otu_subcommand_factory(group, name: str, help_text: str):
     """Return a standardized OTU subcommand with a TAXID argument and a Repo path option."""
     @group.group(
         name=name,
-        help=help,
+        help=help_text,
         invoke_without_command=True,
     )
     @click.argument("TAXID", type=int)
@@ -139,7 +139,7 @@ def otu_subcommand_factory(group, name: str, help_text: str):
 update = otu_subcommand_factory(
     group=otu,
     name="update",
-    help="Update the specified OTU with new data."
+    help_text="Update the specified OTU with new data."
 )
 
 
