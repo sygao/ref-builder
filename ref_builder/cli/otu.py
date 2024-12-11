@@ -104,6 +104,38 @@ def otu_list(path: Path) -> None:
     print_otu_list(Repo(path).iter_minimal_otus())
 
 
+def otu_subcommand_factory(group, name: str, help_text: str):
+    """Return a standardized OTU subcommand with a TAXID argument and a Repo path option."""
+    @group.group(
+        name=name,
+        help=help,
+        invoke_without_command=True,
+    )
+    @click.argument("TAXID", type=int)
+    @path_option
+    @click.pass_context
+    def entry_point(ctx: Context, path: Path, taxid: int):
+        """A generic template for OTU subcommands."""
+        repo = Repo(path)
+
+        ctx.ensure_object(dict)
+        ctx.obj = {
+            "REPO": repo,
+            "TAXID": taxid,
+        }
+
+        if not repo.get_otu_id_by_taxid(taxid):
+            click.echo(f"OTU {taxid} not found.", err=True)
+            sys.exit(1)
+
+        if ctx.invoked_subcommand is None:
+            click.echo(ctx.get_help())
+
+        pass
+
+    return entry_point
+
+
 @otu.group(invoke_without_command=True)
 @click.argument("TAXID", type=int)
 @path_option
