@@ -109,7 +109,10 @@ def otu_list(path: Path) -> None:
 @path_option
 @click.pass_context
 def update(ctx: Context, path: Path, taxid: int) -> None:
-    """Update the specified OTU with new data."""
+    """Update the specified OTU with new data.
+
+    TAXID is the unique numerical identifier assigned by NCBI Taxonomy.
+    """
     repo = Repo(path)
 
     ctx.ensure_object(dict)
@@ -250,7 +253,10 @@ def isolate_create(
 @path_option
 @click.pass_context
 def modify(ctx: Context, path: Path, taxid: int) -> None:
-    """Modify the specified OTU."""
+    """Modify the specified OTU.
+
+    TAXID is the unique numerical identifier assigned by NCBI Taxonomy.
+    """
     repo = Repo(path)
 
     ctx.ensure_object(dict)
@@ -339,7 +345,10 @@ def otu_set_representative_isolate(
 @path_option
 @click.pass_context
 def plan(ctx: Context, path: Path, taxid: int) -> None:
-    """Modify the isolate plan of this OTU."""
+    """Modify the isolate plan of this OTU.
+
+    TAXID is the unique numerical identifier assigned by NCBI Taxonomy.
+    """
     repo = Repo(path)
 
     ctx.ensure_object(dict)
