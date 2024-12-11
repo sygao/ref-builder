@@ -326,26 +326,11 @@ def otu_set_representative_isolate(
     set_representative_isolate(repo, otu_, isolate_id)
 
 
-@otu.group()
-@click.argument("TAXID", type=int)
-@path_option
-@click.pass_context
-def plan(ctx: Context, path: Path, taxid: int) -> None:
-    """Add to or replace this OTU plan."""
-    repo = Repo(path)
-
-    ctx.ensure_object(dict)
-    ctx.obj = {
-        "REPO": repo,
-        "TAXID": taxid,
-    }
-
-    if not repo.get_otu_id_by_taxid(taxid):
-        click.echo(f"OTU {taxid} not found.", err=True)
-        sys.exit(1)
-
-    if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
+plan = otu_subcommand_factory(
+    group=otu,
+    name="plan",
+    help_text="""Add to or replace this OTU plan."""
+)
 
 
 @plan.command(name="extend")
