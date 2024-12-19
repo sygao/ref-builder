@@ -708,6 +708,17 @@ class TestGetIsolate:
         assert isolate_unnamed_after.accessions == {"EMPTY1", "EMPTY2"}
 
 
+def test_get_otu_id_by_sequence_id(initialized_repo: Repo):
+    """Get an OTU ID based on a subordinate sequence ID."""
+    otu = next(initialized_repo.iter_otus())
+
+    accession = next(iter(otu.accessions))
+
+    sequence = otu.get_sequence_by_accession(accession)
+
+    assert initialized_repo.get_otu_id_by_sequence_id(sequence.id) == otu.id
+
+
 def test_exclude_accession(empty_repo: Repo):
     """Test that excluding an accession from an OTU writes the expected event file and
     returns the expected OTU objects.
