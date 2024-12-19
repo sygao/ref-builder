@@ -708,6 +708,29 @@ class TestGetIsolate:
         assert isolate_unnamed_after.accessions == {"EMPTY1", "EMPTY2"}
 
 
+class TestGetSequence:
+    def test_from_otu(self, initialized_repo: Repo):
+        otu = next(initialized_repo.iter_otus())
+
+        sequence = otu.get_sequence_by_accession(next(iter(otu.accessions)))
+
+        assert isinstance(sequence, RepoSequence)
+
+    def test_from_repo_with_otu_id(self, initialized_repo: Repo):
+        otu = next(initialized_repo.iter_otus())
+
+        sequence = otu.get_sequence_by_accession(next(iter(otu.accessions)))
+
+        assert initialized_repo.get_sequence(sequence.id, otu_id=otu.id) == sequence
+
+    def test_from_repo_without_otu_id(self, initialized_repo: Repo):
+        otu = next(initialized_repo.iter_otus())
+
+        sequence = otu.get_sequence_by_accession(next(iter(otu.accessions)))
+
+        assert initialized_repo.get_sequence(sequence.id) == sequence
+
+
 def test_get_otu_id_by_sequence_id(initialized_repo: Repo):
     """Get an OTU ID based on a subordinate sequence ID."""
     otu = next(initialized_repo.iter_otus())
