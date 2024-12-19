@@ -637,6 +637,22 @@ class Repo:
         """Get an OTU ID based on a subordinate sequence ID."""
         return self._index.get_otu_id_by_sequence_id(identifier=sequence_id)
 
+    def get_sequence(
+        self, sequence_id: uuid.UUID, otu_id: uuid.UUID | None = None
+    ) -> RepoSequence | None:
+        """Get a sequence with the given UUID."""
+        otu = self.get_otu(
+            otu_id
+            if otu_id is not None
+            else self._index.get_otu_id_by_sequence_id(identifier=sequence_id)
+        )
+
+        if otu is not None:
+            return otu.get_sequence_by_id(sequence_id)
+
+        logger.error("This sequence does not exist in an OTU.")
+        return None
+
     def _rehydrate_otu(self, event_ids: list[int]) -> RepoOTU:
         event = self._event_store.read_event(event_ids[0])
 
