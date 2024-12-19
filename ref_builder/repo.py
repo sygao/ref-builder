@@ -633,6 +633,10 @@ class Repo:
         """
         return self._index.get_id_by_taxid(taxid)
 
+    def get_otu_id_by_sequence_id(self, sequence_id: uuid.UUID) -> uuid.UUID | None:
+        """Get an OTU ID based on a subordinate sequence ID."""
+        return self._index.get_otu_id_by_sequence_id(identifier=sequence_id)
+
     def _rehydrate_otu(self, event_ids: list[int]) -> RepoOTU:
         event = self._event_store.read_event(event_ids[0])
 
