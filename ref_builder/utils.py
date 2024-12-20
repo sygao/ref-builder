@@ -1,11 +1,19 @@
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Annotated
+
+from pydantic import Field, TypeAdapter
 
 import orjson
 
 ZERO_PADDING_MAX = 99999999
 """The maximum number that can be padded with zeroes in event IDs and filenames."""
+
+
+AccessionKey = Annotated[str, Field(pattern=r"^[A-Z]{1,2}[0-9]{5,6}$")]
+
+accession_key_validator = TypeAdapter(AccessionKey)
 
 
 @dataclass(frozen=True)
