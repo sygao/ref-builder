@@ -3,7 +3,9 @@
 from uuid import uuid4
 
 from ref_builder.ncbi.models import NCBISource
-from ref_builder.resources import RepoIsolate, RepoOTU, RepoSequence
+from ref_builder.resources.isolate import RepoIsolate
+from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import Accession
 from tests.fixtures.factories import (
     IsolateFactory,

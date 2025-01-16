@@ -17,7 +17,7 @@ class OTUBase(OTUModel):
     isolates: list[IsolateBase]
     """Isolates contained in this OTU."""
 
-    repr_isolate: UUID4 | None
+    representative_isolate: UUID4 | None
     """The UUID of the representative isolate of this OTU"""
 
     sequences: list[RepoSequence]
@@ -29,12 +29,6 @@ class RepoOTU(OTUModel):
 
     excluded_accessions: set[str]
     """A set of accessions that should not be retrieved in future fetch operations."""
-
-    repr_isolate: UUID4 | None
-    """The UUID of the representative isolate of this OTU"""
-
-    isolates: list[RepoIsolate]
-    """Isolates contained in this OTU."""
 
     _isolates_by_id: dict[UUID4:RepoIsolate]
     """A dictionary of isolates indexed by isolate UUID"""

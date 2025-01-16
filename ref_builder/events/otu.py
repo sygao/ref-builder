@@ -4,6 +4,7 @@ from ref_builder.events.base import ApplicableEvent, EventData, Event, OTUQuery
 from ref_builder.resources.otu import RepoOTU
 from ref_builder.models import Molecule
 from ref_builder.plan import Plan
+from ref_builder.utils import ExcludedAccessionAction
 
 
 class CreateOTUData(EventData):
