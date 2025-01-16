@@ -4,8 +4,9 @@ from syrupy import SnapshotAssertion
 from ref_builder.console import console, print_otu, print_otu_list
 from ref_builder.models import Molecule, MolType, OTUMinimal, Strandedness, Topology
 from ref_builder.plan import Plan, Segment, SegmentName, SegmentRule
-from ref_builder.resources import RepoIsolate, RepoSequence
+from ref_builder.resources.isolate import RepoIsolate
 from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import Accession, IsolateName, IsolateNameType
 from tests.fixtures.factories import OTUMinimalFactory
 from tests.fixtures.providers import AccessionProvider, SequenceProvider

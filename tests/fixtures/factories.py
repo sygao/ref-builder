@@ -17,7 +17,8 @@ from ref_builder.plan import (
     SegmentName,
     SegmentRule,
 )
-from ref_builder.resources import RepoIsolate, RepoSequence
+from ref_builder.resources.isolate import RepoIsolate
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import Accession, IsolateName, IsolateNameType
 from tests.fixtures.providers import (
     AccessionProvider,

@@ -28,7 +28,7 @@ from ref_builder.plan import (
     SegmentRule,
 )
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoSequence
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import IsolateName, IsolateNameType
 
 

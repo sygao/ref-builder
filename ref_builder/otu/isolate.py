@@ -14,8 +14,9 @@ from ref_builder.otu.utils import (
 )
 from ref_builder.plan import extract_segment_name_from_record
 from ref_builder.repo import Repo
-from ref_builder.resources import RepoIsolate, RepoSequence
+from ref_builder.resources.isolate import RepoIsolate
 from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import IsolateName
 
 

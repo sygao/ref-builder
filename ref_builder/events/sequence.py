@@ -1,12 +1,12 @@
 from pydantic import UUID4
 
-from ref_builder.resources import RepoSequence
-from ref_builder.resources.otu import RepoOTU
 from ref_builder.events.base import (
     ApplicableEvent,
     EventData,
     SequenceQuery,
 )
+from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import Accession
 
 

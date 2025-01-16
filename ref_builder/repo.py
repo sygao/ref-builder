@@ -66,13 +66,10 @@ from ref_builder.events.sequence import (
 from ref_builder.index import Index
 from ref_builder.models import Molecule, OTUMinimal
 from ref_builder.plan import Plan
-from ref_builder.resources import (
-    RepoIsolate,
-    RepoMeta,
-    RepoSequence,
-    RepoSettings,
-)
+from ref_builder.resources import RepoMeta, RepoSettings
+from ref_builder.resources.isolate import RepoIsolate
 from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import (
     Accession,
     ExcludedAccessionAction,

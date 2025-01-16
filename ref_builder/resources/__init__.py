@@ -1,10 +1,7 @@
 import datetime
 
 from pydantic import BaseModel, UUID4, Field
-from ref_builder.resources.isolate import RepoIsolate
 
-from ref_builder.resources.models import OTUModel, IsolateModel, SequenceModel
-from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import DataType
 
 

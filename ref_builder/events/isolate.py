@@ -1,6 +1,6 @@
 from pydantic import UUID4
 
-from ref_builder.resources import RepoIsolate
+from ref_builder.resources.isolate import RepoIsolate
 from ref_builder.resources.otu import RepoOTU
 from ref_builder.events.base import (
     ApplicableEvent,

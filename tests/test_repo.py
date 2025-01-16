@@ -7,11 +7,9 @@ import pytest
 from ref_builder.models import Molecule, MolType, Strandedness, Topology
 from ref_builder.plan import Plan, Segment, SegmentRule
 from ref_builder.repo import Repo
-from ref_builder.resources import (
-    RepoIsolate,
-    RepoSequence,
-)
+from ref_builder.resources.isolate import RepoIsolate
 from ref_builder.resources.otu import RepoOTU
+from ref_builder.resources.sequence import RepoSequence
 from ref_builder.utils import Accession, DataType, IsolateName, IsolateNameType
 
 
