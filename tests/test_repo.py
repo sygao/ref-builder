@@ -41,7 +41,7 @@ def initialized_repo(empty_repo: Repo):
 
     sequence_1 = empty_repo.create_sequence(
         otu.id,
-        "TMVABC.1",
+        "TM100021.1",
         "TMV",
         None,
         "RNA",
@@ -258,7 +258,7 @@ class TestCreateOTU:
         """Test that creating an OTU with a legacy ID that already exists raises a
         ``ValueError``.
         """
-        otu = empty_repo.create_otu(
+        empty_repo.create_otu(
             acronym="TMV",
             legacy_id="abcd1234",
             molecule=Molecule(
@@ -576,11 +576,11 @@ class TestGetOTU:
         """
         otu = next(initialized_repo.iter_otus())
 
-        assert otu.accessions == {"TMVABC"}
+        assert otu.accessions == {"TM100021"}
 
         sequence_2 = initialized_repo.create_sequence(
             otu.id,
-            "TMVABCB.1",
+            "TM100022.1",
             "TMV",
             None,
             "RNA",
@@ -597,7 +597,7 @@ class TestGetOTU:
 
         otu = next(initialized_repo.iter_otus())
 
-        assert otu.accessions == {"TMVABC", "TMVABCB"}
+        assert otu.accessions == {"TM100021", "TM100022"}
 
     def test_blocked_accessions(self, initialized_repo: Repo):
         """Test that the `blocked_accessions` property returns the expected set of
@@ -607,7 +607,7 @@ class TestGetOTU:
 
         sequence_2 = initialized_repo.create_sequence(
             otu.id,
-            "TMVABCB.1",
+            "TM100022.1",
             "TMV",
             None,
             "RNA",
@@ -622,12 +622,12 @@ class TestGetOTU:
 
         initialized_repo.link_sequence(otu.id, isolate_b.id, sequence_id=sequence_2.id)
 
-        initialized_repo.exclude_accession(otu.id, "GROK")
-        initialized_repo.exclude_accession(otu.id, "TOK")
+        initialized_repo.exclude_accession(otu.id, "NO100011")
+        initialized_repo.exclude_accession(otu.id, "NO100012")
 
         otu = initialized_repo.get_otu(otu.id)
 
-        assert otu.blocked_accessions == {"TMVABC", "TMVABCB", "GROK", "TOK"}
+        assert otu.blocked_accessions == {"TM100021", "TM100022", "NO100011", "NO100012"}
 
 
 class TestGetIsolate:
@@ -661,8 +661,8 @@ class TestGetIsolate:
 
         sequence_1_1 = initialized_repo.create_sequence(
             otu.id,
-            accession="EMPTY1.1",
-            definition="TMV B",
+            accession="NO100011.1",
+            definition="TMV A",
             legacy_id=None,
             segment="RNA A",
             sequence="GACCACGTGGAGA",
@@ -670,8 +670,8 @@ class TestGetIsolate:
 
         sequence_2_1 = initialized_repo.create_sequence(
             otu.id,
-            accession="EMPTY2.1",
-            definition="TMV A",
+            accession="NO100012.1",
+            definition="TMV B",
             legacy_id=None,
             segment="RNA B",
             sequence="ACTAAGAGAAAAA",
@@ -695,9 +695,9 @@ class TestGetIsolate:
 
         assert len(otu_after.isolate_ids) == len(otu.isolate_ids) + 1
 
-        assert "EMPTY1" in otu_after.accessions
+        assert "NO100011" in otu_after.accessions
 
-        assert "EMPTY2" in otu_after.accessions
+        assert "NO100012" in otu_after.accessions
 
         assert otu_after.isolate_ids == {isolate_before.id, isolate_unnamed.id}
 
@@ -705,7 +705,7 @@ class TestGetIsolate:
 
         assert isolate_unnamed_after.name is None
 
-        assert isolate_unnamed_after.accessions == {"EMPTY1", "EMPTY2"}
+        assert isolate_unnamed_after.accessions == {"NO100011", "NO100012"}
 
 
 def test_exclude_accession(empty_repo: Repo):
@@ -714,7 +714,7 @@ def test_exclude_accession(empty_repo: Repo):
     """
     otu = init_otu(empty_repo)
 
-    empty_repo.exclude_accession(otu.id, "TMVABC.1")
+    empty_repo.exclude_accession(otu.id, "NO100011")
 
     with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
         event = orjson.loads(f.read())
@@ -723,7 +723,7 @@ def test_exclude_accession(empty_repo: Repo):
 
         assert event == {
             "data": {
-                "accessions": ["TMVABC.1"],
+                "accessions": ["NO100011"],
                 "action": "exclude",
             },
             "id": 3,
@@ -734,14 +734,14 @@ def test_exclude_accession(empty_repo: Repo):
         }
 
     assert empty_repo.get_otu(otu.id).excluded_accessions == {
-        "TMVABC.1",
+        "NO100011",
     }
 
-    empty_repo.exclude_accession(otu.id, "ABTV")
+    empty_repo.exclude_accession(otu.id, "NO100012")
 
     assert empty_repo.get_otu(otu.id).excluded_accessions == {
-        "TMVABC.1",
-        "ABTV",
+        "NO100011",
+        "NO100012",
     }
 
 
@@ -754,12 +754,12 @@ class TestExcludeAccessions:
         assert not otu_before.excluded_accessions
 
         empty_repo.exclude_accessions(
-            otu_before.id, {"TM100021.1", "TM100022", "TM100023.1"}
+            otu_before.id, {"NO100011", "NO100012"}
         )
 
         otu_after = empty_repo.get_otu(otu_before.id)
 
-        assert otu_after.excluded_accessions == {"TM100021", "TM100022", "TM100023"}
+        assert otu_after.excluded_accessions == {"NO100011", "NO100012"}
 
         with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
             event = orjson.loads(f.read())
@@ -768,7 +768,7 @@ class TestExcludeAccessions:
 
             assert event == {
                 "data": {
-                    "accessions": ["TM100021", "TM100022", "TM100023"],
+                    "accessions": ["NO100011", "NO100012"],
                     "action": "exclude",
                 },
                 "id": 3,
@@ -779,9 +779,8 @@ class TestExcludeAccessions:
             }
 
         assert empty_repo.get_otu(otu_after.id).excluded_accessions == {
-            "TM100021",
-            "TM100022",
-            "TM100023",
+            "NO100011",
+            "NO100012",
         }
 
     def test_events(self, empty_repo):
@@ -910,7 +909,7 @@ def test_replace_sequence(initialized_repo: Repo):
     """
     otu_before = initialized_repo.get_otu_by_taxid(12242)
 
-    accession = "TMVABC"
+    accession = "TM100021"
 
     isolate_id, replaced_sequence_id = (
         otu_before.get_sequence_id_hierarchy_from_accession(accession)
@@ -918,7 +917,7 @@ def test_replace_sequence(initialized_repo: Repo):
 
     new_sequence = initialized_repo.create_sequence(
         otu_before.id,
-        "TMVABCC.1",
+        "TM100021.2",
         "TMV edit",
         None,
         "RNA",
