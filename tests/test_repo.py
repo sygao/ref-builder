@@ -165,7 +165,9 @@ class TestCreateOTU:
             isolates=[],
         )
 
-        with open(empty_repo.path.joinpath("src", "00000002.json")) as f:
+        assert empty_repo.last_id == 2
+
+        with open(empty_repo.path.joinpath("src", f"{empty_repo.last_id:08}.json")) as f:
             event = orjson.loads(f.read())
 
         del event["timestamp"]
@@ -195,14 +197,12 @@ class TestCreateOTU:
                 },
                 "taxid": 12242,
             },
-            "id": 2,
+            "id": str(empty_repo.last_id),
             "query": {
                 "otu_id": str(otu.id),
             },
             "type": "CreateOTU",
         }
-
-        assert empty_repo.last_id == 2
 
     def test_duplicate_name(self, empty_repo: Repo):
         """Test that creating an OTU with a name that already exists raises a
@@ -409,7 +409,9 @@ def test_create_sequence(empty_repo: Repo):
         sequence="ACGT",
     )
 
-    with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
+    assert empty_repo.last_id == 3
+
+    with open(empty_repo.path.joinpath("src", f"{empty_repo.last_id:08}.json")) as f:
         event = orjson.loads(f.read())
 
     del event["timestamp"]
@@ -423,15 +425,13 @@ def test_create_sequence(empty_repo: Repo):
             "segment": "RNA",
             "sequence": "ACGT",
         },
-        "id": 3,
+        "id": str(empty_repo.last_id),
         "query": {
             "otu_id": str(otu.id),
             "sequence_id": str(sequence.id),
         },
         "type": "CreateSequence",
     }
-
-    assert empty_repo.last_id == 3
 
 
 class TestGetOTU:
