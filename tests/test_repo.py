@@ -59,6 +59,16 @@ def initialized_repo(empty_repo: Repo):
     return empty_repo
 
 
+def read_event(repo: Repo, event_id: int) -> dict:
+    """Read and serialize the given event, remove the timestamp and return the data."""
+    with open(repo.path.joinpath("src", f"{event_id:08}.json")) as f:
+        event = orjson.loads(f.read())
+
+    del event["timestamp"]
+
+    return event
+
+
 def init_otu(empty_repo: Repo) -> RepoOTU:
     return empty_repo.create_otu(
         acronym="TMV",
