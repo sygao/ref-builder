@@ -435,7 +435,7 @@ def test_create_sequence(empty_repo: Repo):
             "segment": "RNA",
             "sequence": "ACGT",
         },
-        "id": str(empty_repo.last_id),
+        "id": empty_repo.last_id,
         "query": {
             "otu_id": str(otu.id),
             "sequence_id": str(sequence.id),
