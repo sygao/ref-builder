@@ -15,6 +15,18 @@ from ref_builder.resources import (
 from ref_builder.utils import Accession, DataType, IsolateName, IsolateNameType
 
 
+def get_mock_plan(repo_settings):
+    return Plan.new(
+        segments=[
+            Segment.new(
+                length=150,
+                length_tolerance=repo_settings.default_segment_length_tolerance,
+                name=None,
+            )
+        ]
+    )
+
+
 @pytest.fixture()
 def mock_otu_metadata() -> dict:
     return {
@@ -31,17 +43,10 @@ def mock_otu_metadata() -> dict:
 
 
 @pytest.fixture()
-def initialized_repo(empty_repo: Repo):
+def initialized_repo(empty_repo: Repo, mock_otu_metadata: dict) -> Repo:
     """Return a pre-initialized mock Repo."""
     otu = empty_repo.create_otu(
-        acronym="TMV",
-        legacy_id=None,
-        molecule=Molecule(
-            strandedness=Strandedness.SINGLE,
-            type=MolType.RNA,
-            topology=Topology.LINEAR,
-        ),
-        name="Tobacco mosaic virus",
+        **mock_otu_metadata,
         plan=Plan.new(
             segments=[
                 Segment.new(
