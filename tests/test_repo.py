@@ -47,16 +47,7 @@ def initialized_repo(empty_repo: Repo, mock_otu_metadata: dict) -> Repo:
     """Return a pre-initialized mock Repo."""
     otu = empty_repo.create_otu(
         **mock_otu_metadata,
-        plan=Plan.new(
-            segments=[
-                Segment.new(
-                    length=150,
-                    length_tolerance=empty_repo.settings.default_segment_length_tolerance,
-                    name=None,
-                )
-            ]
-        ),
-        taxid=12242,
+        plan=get_mock_plan(empty_repo.settings),
     )
 
     sequence_1 = empty_repo.create_sequence(
@@ -238,7 +229,8 @@ class TestCreateOTU:
         """Test that creating an OTU with a name that already exists raises a
         ``ValueError``.
         """
-        empty_repo.create_otu(**mock_otu_metadata,
+        empty_repo.create_otu(
+            **mock_otu_metadata,
             plan=Plan.new(
                 segments=[
                     Segment.new(
@@ -259,15 +251,7 @@ class TestCreateOTU:
         ):
             empty_repo.create_otu(
                 **mock_otu_metadata_2,
-                plan=Plan.new(
-                    segments=[
-                        Segment.new(
-                            length=150,
-                            length_tolerance=empty_repo.settings.default_segment_length_tolerance,
-                            name=None,
-                        )
-                    ]
-                ),
+                plan=get_mock_plan(empty_repo.settings),
             )
 
     def test_duplicate_legacy_id(self, empty_repo: Repo, mock_otu_metadata: dict):
@@ -275,16 +259,7 @@ class TestCreateOTU:
         ``ValueError``.
         """
         empty_repo.create_otu(
-            **mock_otu_metadata,
-            plan=Plan.new(
-                segments=[
-                    Segment.new(
-                        length=150,
-                        length_tolerance=empty_repo.settings.default_segment_length_tolerance,
-                        name=None,
-                    )
-                ]
-            ),
+            **mock_otu_metadata, plan=get_mock_plan(empty_repo.settings)
         )
 
         with pytest.raises(
@@ -300,15 +275,7 @@ class TestCreateOTU:
                 ),
                 legacy_id=mock_otu_metadata["legacy_id"],
                 name="Abaca bunchy top virus",
-                plan=Plan.new(
-                    segments=[
-                        Segment.new(
-                            length=150,
-                            length_tolerance=empty_repo.settings.default_segment_length_tolerance,
-                            name=None,
-                        )
-                    ]
-                ),
+                plan=get_mock_plan(empty_repo.settings),
                 taxid=438782,
             )
 
