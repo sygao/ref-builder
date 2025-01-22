@@ -207,7 +207,7 @@ class TestCreateOTU:
                 },
                 "taxid": 12242,
             },
-            "id": str(empty_repo.last_id),
+            "id": empty_repo.last_id,
             "query": {
                 "otu_id": str(otu.id),
             },
