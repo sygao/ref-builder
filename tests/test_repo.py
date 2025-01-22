@@ -177,7 +177,7 @@ class TestCreateOTU:
 
         assert empty_repo.last_id == 2
 
-        with open(empty_repo.path.joinpath("src", f"{empty_repo.last_id:08}.json")) as f:
+        with open(empty_repo.path / "src" / f"{empty_repo.last_id:08}.json") as f:
             event = orjson.loads(f.read())
 
         del event["timestamp"]
@@ -335,7 +335,9 @@ class TestCreateIsolate:
         assert isolate.name.value == "A"
         assert isolate.name.type == "isolate"
 
-        with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
+        assert empty_repo.last_id == 3
+
+        with open(empty_repo.path / "src" / f"{3:08}.json") as f:
             event = orjson.loads(f.read())
 
         del event["timestamp"]
@@ -421,7 +423,7 @@ def test_create_sequence(empty_repo: Repo):
 
     assert empty_repo.last_id == 3
 
-    with open(empty_repo.path.joinpath("src", f"{empty_repo.last_id:08}.json")) as f:
+    with open(empty_repo.path / "src" / f"{empty_repo.last_id:08}.json") as f:
         event = orjson.loads(f.read())
 
     del event["timestamp"]
@@ -846,22 +848,24 @@ class TestAllowAccessions:
 
         otu_after = empty_repo.get_otu(otu.id)
 
-        with open(empty_repo.path.joinpath("src", "00000004.json")) as f:
+        assert empty_repo.last_id == 4
+
+        with open(empty_repo.path / "src" / "00000004.json") as f:
             event = orjson.loads(f.read())
 
-            del event["timestamp"]
+        del event["timestamp"]
 
-            assert event == {
-                "data": {
-                    "accessions": ["TM100021", "TM100022"],
-                    "action": "allow",
-                },
-                "id": 4,
-                "query": {
-                    "otu_id": str(otu_after.id),
-                },
-                "type": "UpdateExcludedAccessions",
-            }
+        assert event == {
+            "data": {
+                "accessions": ["TM100021", "TM100022"],
+                "action": "allow",
+            },
+            "id": 4,
+            "query": {
+                "otu_id": str(otu_after.id),
+            },
+            "type": "UpdateExcludedAccessions",
+        }
 
         assert otu_after.excluded_accessions == {"TM100023"}
 
@@ -877,13 +881,17 @@ class TestAllowAccessions:
 
         otu_before = empty_repo.get_otu(otu.id)
 
+        assert empty_repo.last_id == 3
+
         assert otu_before.excluded_accessions == mock_accessions
 
         empty_repo.allow_accessions(otu.id, ["TM100024"])
 
         otu_after = empty_repo.get_otu(otu.id)
 
-        assert not empty_repo.path.joinpath("src", "00000005.json").exists()
+        assert empty_repo.last_id == 3
+
+        assert not (empty_repo.path / "src" / f"{empty_repo.last_id+1:08}.json").exists()
 
         assert otu_after.excluded_accessions == mock_accessions
 
@@ -955,7 +963,7 @@ class TestMalformedEvent:
         """Test that an event with an invalid event type discriminator does not attempt
         to rehydrate.
         """
-        filepath = initialized_repo.path.joinpath("src", "00000002.json")
+        filepath = initialized_repo.path / "src" / f"{2:08}.json"
 
         with open(filepath, "rb") as f:
             event = orjson.loads(f.read())
@@ -974,7 +982,7 @@ class TestMalformedEvent:
 
     def test_bad_event_data(self, initialized_repo: Repo):
         """Test that an event with bad data cannot be rehydrated."""
-        path = initialized_repo.path.joinpath("src", "00000002.json")
+        path = initialized_repo.path / "src" / "00000002.json"
 
         with open(path, "rb") as f:
             event = orjson.loads(f.read())
