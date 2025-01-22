@@ -16,6 +16,21 @@ from ref_builder.utils import Accession, DataType, IsolateName, IsolateNameType
 
 
 @pytest.fixture()
+def mock_otu_metadata() -> dict:
+    return {
+        "acronym": "TMV",
+        "legacy_id": "abcd1234",
+        "molecule": {
+            "strandedness": "single",
+            "type": "RNA",
+            "topology": "linear",
+        },
+        "name": "Tobacco mosaic virus",
+        "taxid": 12242,
+    }
+
+
+@pytest.fixture()
 def initialized_repo(empty_repo: Repo):
     """Return a pre-initialized mock Repo."""
     otu = empty_repo.create_otu(
