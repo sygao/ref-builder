@@ -604,7 +604,12 @@ class TestGetOTU:
 
         otu = initialized_repo.get_otu(otu.id)
 
-        assert otu.blocked_accessions == {"TM100021", "TM100022", "NO100011", "NO100012"}
+        assert otu.blocked_accessions == {
+            "TM100021",
+            "TM100022",
+            "NO100011",
+            "NO100012",
+        }
 
 
 class TestGetIsolate:
@@ -730,9 +735,7 @@ class TestExcludeAccessions:
 
         assert not otu_before.excluded_accessions
 
-        empty_repo.exclude_accessions(
-            otu_before.id, {"NO100011", "NO100012"}
-        )
+        empty_repo.exclude_accessions(otu_before.id, {"NO100011", "NO100012"})
 
         otu_after = empty_repo.get_otu(otu_before.id)
 
@@ -856,7 +859,9 @@ class TestAllowAccessions:
 
         assert empty_repo.last_id == 3
 
-        assert not (empty_repo.path / "src" / f"{empty_repo.last_id+1:08}.json").exists()
+        assert not (
+            empty_repo.path / "src" / f"{empty_repo.last_id+1:08}.json"
+        ).exists()
 
         assert otu_after.excluded_accessions == mock_accessions
 
