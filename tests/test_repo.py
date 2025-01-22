@@ -234,19 +234,11 @@ class TestCreateOTU:
             "type": "CreateOTU",
         }
 
-    def test_duplicate_name(self, empty_repo: Repo):
+    def test_duplicate_name(self, empty_repo: Repo, mock_otu_metadata: dict):
         """Test that creating an OTU with a name that already exists raises a
         ``ValueError``.
         """
-        otu = empty_repo.create_otu(
-            acronym="TMV",
-            legacy_id=None,
-            molecule=Molecule(
-                strandedness=Strandedness.SINGLE,
-                type=MolType.RNA,
-                topology=Topology.LINEAR,
-            ),
-            name="Tobacco mosaic virus",
+        empty_repo.create_otu(**mock_otu_metadata,
             plan=Plan.new(
                 segments=[
                     Segment.new(
@@ -256,22 +248,17 @@ class TestCreateOTU:
                     )
                 ]
             ),
-            taxid=12242,
         )
+
+        mock_otu_metadata_2 = mock_otu_metadata.copy()
+        mock_otu_metadata_2["taxid"] = 438782
 
         with pytest.raises(
             ValueError,
             match="An OTU with the name 'Tobacco mosaic virus' already exists",
         ):
             empty_repo.create_otu(
-                acronym="TMV",
-                legacy_id=None,
-                molecule=Molecule(
-                    strandedness=Strandedness.SINGLE,
-                    type=MolType.RNA,
-                    topology=Topology.LINEAR,
-                ),
-                name="Tobacco mosaic virus",
+                **mock_otu_metadata_2,
                 plan=Plan.new(
                     segments=[
                         Segment.new(
@@ -281,22 +268,14 @@ class TestCreateOTU:
                         )
                     ]
                 ),
-                taxid=438782,
             )
 
-    def test_duplicate_legacy_id(self, empty_repo: Repo):
+    def test_duplicate_legacy_id(self, empty_repo: Repo, mock_otu_metadata: dict):
         """Test that creating an OTU with a legacy ID that already exists raises a
         ``ValueError``.
         """
         empty_repo.create_otu(
-            acronym="TMV",
-            legacy_id="abcd1234",
-            molecule=Molecule(
-                strandedness=Strandedness.SINGLE,
-                type=MolType.RNA,
-                topology=Topology.LINEAR,
-            ),
-            name="Tobacco mosaic virus",
+            **mock_otu_metadata,
             plan=Plan.new(
                 segments=[
                     Segment.new(
@@ -306,12 +285,11 @@ class TestCreateOTU:
                     )
                 ]
             ),
-            taxid=12242,
         )
 
         with pytest.raises(
             ValueError,
-            match="An OTU with the legacy ID 'abcd1234' already exists",
+            match=f"An OTU with the legacy ID '{mock_otu_metadata["legacy_id"]}' already exists",
         ):
             empty_repo.create_otu(
                 acronym="",
@@ -320,7 +298,7 @@ class TestCreateOTU:
                     type=MolType.RNA,
                     topology=Topology.LINEAR,
                 ),
-                legacy_id="abcd1234",
+                legacy_id=mock_otu_metadata["legacy_id"],
                 name="Abaca bunchy top virus",
                 plan=Plan.new(
                     segments=[
