@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from uuid import UUID
 
 from structlog import get_logger
@@ -11,12 +12,14 @@ from ref_builder.otu.isolate import (
 )
 from ref_builder.otu.utils import (
     DeleteRationale,
+    get_segments_min_length,
+    get_segments_max_length,
     group_genbank_records_by_isolate,
     parse_refseq_comment,
 )
 from ref_builder.repo import Repo
 from ref_builder.resources import RepoIsolate, RepoOTU
-from ref_builder.utils import Accession, IsolateName
+from ref_builder.utils import IsolateName
 
 logger = get_logger("otu.update")
 
@@ -40,6 +43,85 @@ def auto_update_otu(
         update_otu_with_accessions(repo, otu, fetch_list, ignore_cache)
     else:
         log.info("OTU is up to date.")
+
+
+def batch_cache_otus(
+    otu_iterable: Iterable[RepoOTU],
+    ignore_cache: bool = False,
+) -> None:
+    """Update a batch of OTUs.
+
+    TO BE IMPLEMENTED.
+    """
+    ncbi = NCBIClient(ignore_cache)
+
+    fetch_set = set()
+
+    otu_counter = 0
+
+    logger.info("Requesting new accessions from this iterator...")
+
+    for otu in otu_iterable:
+        otu_logger = logger.bind(taxid=otu.taxid, name=otu.name)
+
+        otu_counter += 1
+
+        raw_accessions = ncbi.fetch_accessions_by_taxid(
+            otu.taxid,
+            sequence_min_length=get_segments_min_length(otu.plan.segments),
+            sequence_max_length=get_segments_max_length(otu.plan.segments),
+        )
+
+        otu_accessions = ncbi.filter_accessions(raw_accessions)
+
+        otu_fetch_set = {
+                            accession.key for accession in otu_accessions
+                        } - otu.blocked_accessions
+
+        if otu_fetch_set:
+            otu_logger.debug(
+                "Potential accessions found.",
+                accession_count=len(otu_fetch_set),
+                otu_counter=otu_counter,
+            )
+
+            fetch_set = fetch_set | otu_fetch_set
+
+    if not fetch_set:
+        logger.info("OTUs are up to date.")
+
+        return
+
+    logger.info("Potential accessions found. Downloading records...", accession_count=len(fetch_set))
+
+    records = ncbi.fetch_genbank_records(fetch_set)
+
+    if not records:
+        logger.info("No valid records found.")
+
+        return
+
+    logger.info("Downloaded valid records.", records=len(records))
+
+
+def batch_update_repo(
+    repo: Repo,
+    name_contains: str = "",
+    name_starts_with: str = "",
+    ignore_cache: bool = False,
+):
+    """Update all OTUS.
+
+    TO BE IMPLEMENTED.
+    """
+    repo_logger = logger.bind(path=str(repo.path))
+
+    repo_logger.info("Starting batch update", contains=name_contains, starts_with=name_starts_with)
+
+    batch_cache_otus(
+        otu_iterable=repo.iter_otus_by_name(contains=name_contains, starts_with=name_starts_with),
+        ignore_cache=ignore_cache,
+    )
 
 
 def update_isolate_from_accessions(
