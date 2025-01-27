@@ -203,6 +203,23 @@ class Index:
 
         return None
 
+    def get_ids_by_name(self, contains: str = "", starts_with: str = "") -> list[UUID]:
+        """Get a list of OTU ids ordered by name. Can return filtered results."""
+        search_string = ""
+        if contains or starts_with:
+            search_string = f" WHERE name LIKE '{starts_with}%{contains}%'"
+
+        cursor = self.con.execute(
+            "SELECT id, name, taxid FROM otus" + search_string + " ORDER BY name",
+        )
+
+        otu_ids = []
+
+        for row in cursor:
+            otu_ids.append(UUID(row[0]))
+
+        return otu_ids
+
     def delete_otu(self, otu_id: UUID) -> None:
         """Remove an OTU from the index.
 
