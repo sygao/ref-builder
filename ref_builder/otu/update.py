@@ -48,7 +48,7 @@ def auto_update_otu(
 def batch_cache_otus(
     otu_iterable: Iterable[RepoOTU],
     ignore_cache: bool = False,
-) -> None:
+) -> dict[int, list] | None:
     """Update a batch of OTUs.
 
     TO BE IMPLEMENTED.
@@ -60,6 +60,8 @@ def batch_cache_otus(
     otu_counter = 0
 
     logger.info("Requesting new accessions from this iterator...")
+
+    taxid_accession_index = {}
 
     for otu in otu_iterable:
         otu_logger = logger.bind(taxid=otu.taxid, name=otu.name)
@@ -85,6 +87,8 @@ def batch_cache_otus(
                 otu_counter=otu_counter,
             )
 
+            taxid_accession_index[otu.taxid] = otu_fetch_set
+
             fetch_set = fetch_set | otu_fetch_set
 
     if not fetch_set:
@@ -102,6 +106,21 @@ def batch_cache_otus(
         return
 
     logger.info("Downloaded valid records.", records=len(records))
+
+    indexed_records = {record.accession: record for record in records}
+
+    taxid_records = defaultdict(list)
+    for taxid in taxid_accession_index:
+        if (new_otu_accessions := taxid_accession_index.get(taxid)) is None:
+            continue
+
+        for accession in new_otu_accessions:
+            if (record := indexed_records.get(accession)) is not None:
+                taxid_records[taxid].append(record)
+
+    logger.debug("", indexed_records=[accession for accession in indexed_records])
+
+    return taxid_records
 
 
 def batch_update_repo(
