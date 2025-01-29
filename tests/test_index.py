@@ -69,6 +69,20 @@ def test_iter_otus(index: Index, indexable_otus: list[RepoOTU]):
     )
 
 
+def test_bin_by_name_ok(index: Index, indexable_otus: list[RepoOTU]):
+    """Test that OTU ids can be filtered by a partial name."""
+    indexable_otu_dict = {otu.id: otu for otu in indexable_otus}
+
+    for otu_id in indexable_otu_dict:
+        binned_otu_ids = index.get_ids_by_name(
+            starts_with=indexable_otu_dict[otu_id].name[0]
+        )
+
+        assert len(binned_otu_ids) < len(indexable_otus)
+
+        assert otu_id in binned_otu_ids
+
+
 class TestLoadSnapshot:
     """Test the `load_snapshot` method of the Snapshotter class."""
 

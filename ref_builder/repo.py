@@ -200,6 +200,13 @@ class Repo:
         for otu_id in self._index.otu_ids:
             yield self.get_otu(otu_id)
 
+    def iter_otus_by_name(
+        self, contains: str = "", starts_with: str = ""
+    ) -> Iterator[RepoOTU]:
+        """Iterate over the OTUs in the repository in alphabetical order."""
+        for otu_id in self._index.get_ids_by_name(contains, starts_with):
+            yield self.get_otu(otu_id)
+
     def iter_otus_from_events(self) -> Iterator[RepoOTU]:
         """Iterate over the OTUs, bypassing the index."""
         events_by_otu = defaultdict(list)
