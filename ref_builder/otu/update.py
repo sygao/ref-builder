@@ -137,10 +137,18 @@ def batch_update_repo(
 
     repo_logger.info("Starting batch update", contains=name_contains, starts_with=name_starts_with)
 
-    batch_cache_otus(
+    taxid_records = batch_cache_otus(
         otu_iterable=repo.iter_otus_by_name(contains=name_contains, starts_with=name_starts_with),
         ignore_cache=ignore_cache,
     )
+
+    if taxid_records is not None:
+        for taxid in taxid_records:
+            update_otu_with_records(
+                repo,
+                otu=repo.get_otu_by_taxid(taxid),
+                records=taxid_records[taxid],
+            )
 
 
 def update_isolate_from_accessions(
