@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 
 import structlog
 
@@ -32,7 +34,15 @@ def configure_logger(verbosity: int) -> None:
             )
         )
 
-    processors.append(structlog.dev.ConsoleRenderer())
+    if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
+        processors.append(structlog.dev.ConsoleRenderer())
+    else:
+        processors += [
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.format_exc_info,
+            structlog.processors.dict_tracebacks,
+            structlog.processors.JSONRenderer(),
+        ]
 
     structlog.configure(
         logger_factory=structlog.PrintLoggerFactory(),
