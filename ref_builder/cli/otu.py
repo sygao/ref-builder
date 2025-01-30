@@ -107,13 +107,14 @@ def otu_list(path: Path) -> None:
 
 
 @otu.command(name="batch-update")
+@click.option("--starts_with", type=str)
 @ignore_cache_option
 @path_option
-def otu_batch_auto_update(path: Path, ignore_cache: bool) -> None:
+def otu_batch_auto_update(path: Path, starts_with: str, ignore_cache: bool) -> None:
     """Update all OTUs with the latest data from NCBI."""
     repo = Repo(path)
 
-    batch_update_repo(repo, ignore_cache)
+    batch_update_repo(repo, name_starts_with=starts_with, ignore_cache=ignore_cache)
 
 
 @otu.command(name="update")
