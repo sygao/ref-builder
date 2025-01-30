@@ -142,13 +142,25 @@ def batch_update_repo(
         ignore_cache=ignore_cache,
     )
 
+    otu_count = 0
+    isolate_count = 0
+
     if taxid_records is not None:
         for taxid in taxid_records:
-            update_otu_with_records(
-                repo,
-                otu=repo.get_otu_by_taxid(taxid),
-                records=taxid_records[taxid],
-            )
+            if taxid_records[taxid]:
+                new_isolate_names = update_otu_with_records(
+                    repo,
+                    otu=repo.get_otu_by_taxid(taxid),
+                    records=taxid_records[taxid],
+                )
+                otu_count += 1
+                isolate_count += len(new_isolate_names)
+
+    repo_logger.info(
+        "Batch update complete.",
+        isolate_count=isolate_count,
+        otu_count=otu_count,
+    )
 
 
 def update_isolate_from_accessions(
