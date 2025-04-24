@@ -862,9 +862,7 @@ class TestUpdateIdentifiers:
 
         assert initialized_repo.get_otu_by_taxid(otu_init.taxid) is None
 
-        assert (
-            otu_after := initialized_repo.get_otu_by_taxid(dummy_taxid)
-        ) is not None
+        assert (otu_after := initialized_repo.get_otu_by_taxid(dummy_taxid)) is not None
 
         assert otu_after.taxid == dummy_taxid
 
