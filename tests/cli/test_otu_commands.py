@@ -552,3 +552,12 @@ class TestExtendPlanCommand:
         assert result.exit_code == 1
 
         print(result.output)
+
+
+class TestCorrectRanksCommand:
+    def test_ok(self, scratch_repo):
+        result = runner.invoke(
+            otu_command_group, ["--path", str(scratch_repo.path), "correct-ranks"]
+        )
+
+        assert result.exit_code == 0
