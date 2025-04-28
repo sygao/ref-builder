@@ -6,6 +6,7 @@ from ref_builder.ncbi.models import NCBIGenbank, NCBIRank, NCBITaxonomy
 from ref_builder.otu.builders.otu import OTUBuilder
 from ref_builder.otu.isolate import create_sequence_from_record
 from ref_builder.otu.utils import (
+    InvalidTaxonomyError,
     assign_records_to_segments,
     create_plan_from_records,
     get_molecule_from_records,
@@ -69,7 +70,7 @@ def create_otu_with_taxid(
         )
         return None
 
-    with repo.use_transaction():
+    with repo.use_transaction() as active_transaction:
         try:
             return write_otu(
                 repo,
@@ -80,14 +81,16 @@ def create_otu_with_taxid(
                 if binned_records
                 else None,
             )
-        except ValueError:
+        except InvalidTaxonomyError:
             otu_logger.error(
-                "OTU could not be created to spec based on given data.",
+                "Non-species level rank is not allowed in this repo.",
                 taxid=taxonomy.id,
-                accessions=accessions,
+                rank=taxonomy.rank,
             )
 
-            return None
+            active_transaction.abort()
+
+    return None
 
 
 def create_otu_without_taxid(
@@ -166,6 +169,9 @@ def write_otu(
     Nucleotide records.
     """
     otu_logger = logger.bind(taxid=taxonomy.id)
+
+    if repo.settings.species_otus_only and taxonomy.rank != NCBIRank.SPECIES:
+        raise InvalidTaxonomyError("OTU rank is not species-level")
 
     plan = create_plan_from_records(
         records,
