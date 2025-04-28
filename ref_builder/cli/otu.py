@@ -23,6 +23,7 @@ from ref_builder.otu.create import create_otu_with_taxid, create_otu_without_tax
 from ref_builder.otu.modify import (
     add_segments_to_plan,
     allow_accessions_into_otu,
+    correct_otu_ranks,
     exclude_accessions_from_otu,
     rename_plan_segment,
     set_representative_isolate,
@@ -422,3 +423,11 @@ def plan_rename_segment(
         )
     except ValueError as e:
         click.echo(e, err=True)
+
+
+@otu.command(name="correct-ranks")
+@ignore_cache_option
+@pass_repo
+def otu_check_ranks(repo: Repo, ignore_cache: bool) -> None:
+    """Ensure all OTUs are at the ``species`` rank."""
+    correct_otu_ranks(repo, ignore_cache)
