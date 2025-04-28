@@ -18,7 +18,7 @@ from ref_builder.otu.update import (
 )
 from ref_builder.otu.utils import RefSeqConflictError
 from ref_builder.repo import Repo
-from ref_builder.utils import IsolateName, IsolateNameType
+from ref_builder.utils import DataType, IsolateName, IsolateNameType
 
 
 class TestCreateOTU:
@@ -184,6 +184,41 @@ class TestCreateOTU:
             )
 
         assert otu_.acronym == "FBNSV"
+
+
+def test_create_in_otu_only_repo(tmp_path):
+    """Test that the species_otu_only setting automatically blocks non-species rank OTUs."""
+    otu_only_repo = Repo.new(
+        data_type=DataType.GENOME,
+        name="src_test",
+        path=tmp_path,
+        organism="viruses",
+        species_otus_only=True,
+    )
+
+    with otu_only_repo.lock():
+        otu_1 = create_otu_with_taxid(
+            otu_only_repo,
+            438782,
+            [
+                "NC_010314",
+                "NC_010315",
+                "NC_010316",
+                "NC_010317",
+                "NC_010318",
+                "NC_010319",
+            ],
+            "",
+        )
+
+    assert otu_only_repo.get_otu(otu_1.id).taxid == 438782
+
+    with otu_only_repo.lock():
+        otu_2 = create_otu_with_taxid(otu_only_repo, 1238162, ["NC_018869"], "")
+
+        assert otu_2 is None
+
+    assert otu_only_repo.get_otu_by_taxid(1238162) is None
 
 
 class TestAddIsolate:
