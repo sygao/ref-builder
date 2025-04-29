@@ -5,7 +5,9 @@ from uuid import uuid4
 
 from syrupy import SnapshotAssertion
 
-from ref_builder.otu.models import Isolate, OTU, Sequence
+from ref_builder.otu.validators.isolate import Isolate
+from ref_builder.otu.validators.otu import OTU
+from ref_builder.otu.validators.sequence import Sequence
 from ref_builder.ncbi.models import NCBISource
 from ref_builder.resources import RepoSequence
 from ref_builder.utils import Accession
@@ -65,4 +67,9 @@ def test_isolate_factory():
 
 def test_otu_factory(otu_factory: OTUFactory):
     """Test that OTUFactory creates valid mock OTU data."""
-    assert all(OTU.model_validate(otu.model_dump()) for otu in otu_factory.coverage())
+    mock_otus = otu_factory.coverage()
+
+    for mock_otu in mock_otus:
+        print(mock_otu.representative_isolate)
+
+    assert all(OTU.model_validate(otu.model_dump()) for otu in mock_otus)
