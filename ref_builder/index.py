@@ -6,10 +6,7 @@ import sqlite3
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 from uuid import UUID
-
-import orjson
 
 from ref_builder.errors import PartialIDConflictError
 from ref_builder.events.base import EventMetadata
@@ -39,6 +36,33 @@ class Snapshot:
     """The OTU that was snapshotted."""
 
 
+def adapt_uuid(original_uuid: UUID) -> str:
+    """Automatically convert UUID to SQLite-compatible string."""
+    return str(original_uuid)
+
+
+def adapt_datetime(original_datetime: datetime.datetime) -> str:
+    """Automatically convert datetime to SQLite-compatible string."""
+    return original_datetime.isoformat()
+
+
+def convert_uuid(string_uuid: bytes) -> UUID:
+    """Automatically convert stringified UUID back to UUID type."""
+    return UUID(string_uuid.decode())
+
+
+def convert_datetime(string_datetime: bytes) -> datetime.datetime:
+    """Automatically convert stringified datetime back to datetime type."""
+    return datetime.datetime.fromisoformat(string_datetime.decode())
+
+
+sqlite3.register_adapter(UUID, adapt_uuid)
+sqlite3.register_adapter(datetime.datetime, adapt_datetime)
+
+sqlite3.register_converter("uuid", convert_uuid)
+sqlite3.register_converter("datetime", convert_datetime)
+
+
 class Index:
     """An index for rapid access to repository data.
 
@@ -55,7 +79,12 @@ class Index:
 
         self.path.parent.mkdir(exist_ok=True, parents=True)
 
-        self.con = sqlite3.connect(path, isolation_level=None)
+        self.con = sqlite3.connect(
+            path,
+            isolation_level=None,
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+        )
+
         self.con.execute("PRAGMA journal_mode = WAL")
         self.con.execute("PRAGMA synchronous = NORMAL")
 
@@ -136,7 +165,9 @@ class Index:
     @property
     def otu_ids(self) -> set[UUID]:
         """A list of all OTUs tracked in the index."""
-        return {UUID(row[0]) for row in self.con.execute("SELECT id FROM otus")}
+        return {
+            row[0] for row in self.con.execute('SELECT id AS "id [uuid]" FROM otus')
+        }
 
     def add_event_id(
         self,
@@ -159,8 +190,8 @@ class Index:
             """,
             (
                 event_id,
-                str(otu_id),
-                timestamp.isoformat(),
+                otu_id,
+                timestamp,
             ),
         )
 
@@ -173,7 +204,7 @@ class Index:
             WHERE otu_id = ?
             ORDER BY event_id
             """,
-            (str(otu_id),),
+            (otu_id,),
         )
 
         event_ids = [row[0] for row in res]
@@ -191,15 +222,16 @@ class Index:
         cursor = self.con.execute(
             """
             SELECT timestamp
+            AS "timestamp [datetime]"
             FROM events
             WHERE otu_id = ?
             ORDER BY event_id
             """,
-            (str(otu_id),),
+            (otu_id,),
         )
 
         if result := cursor.fetchone():
-            return datetime.datetime.fromisoformat(result[0])
+            return result[0]
 
         return None
 
@@ -208,58 +240,59 @@ class Index:
         cursor = self.con.execute(
             """
             SELECT timestamp
+            AS "timestamp [datetime]"
             FROM events
             WHERE otu_id = ?
             ORDER BY event_id DESC
             """,
-            (str(otu_id),),
+            (otu_id,),
         )
 
         if result := cursor.fetchone():
-            return datetime.datetime.fromisoformat(result[0])
+            return result[0]
 
         return None
 
     def get_id_by_legacy_id(self, legacy_id: str) -> UUID | None:
         """Get an OTU ID by its legacy ID."""
         cursor = self.con.execute(
-            "SELECT id FROM otus WHERE legacy_id = ?",
+            'SELECT id AS "id [uuid]" FROM otus WHERE legacy_id = ?',
             (legacy_id,),
         )
 
         if result := cursor.fetchone():
-            return UUID(result[0])
+            return result[0]
 
         return None
 
     def get_id_by_name(self, name: str) -> UUID | None:
         """Get an OTU ID by its name."""
         cursor = self.con.execute(
-            "SELECT id FROM otus WHERE name = ?",
+            'SELECT id AS "id [uuid]" FROM otus WHERE name = ?',
             (name,),
         )
 
         if result := cursor.fetchone():
-            return UUID(result[0])
+            return result[0]
 
         return None
 
     def get_id_by_taxid(self, taxid: int) -> UUID | None:
         """Get an OTU ID by its taxonomy ID."""
         cursor = self.con.execute(
-            "SELECT id FROM otus WHERE taxid = ?",
+            'SELECT id AS "id [uuid]" FROM otus WHERE taxid = ?',
             (taxid,),
         )
 
         if result := cursor.fetchone():
-            return UUID(result[0])
+            return result[0]
 
         return None
 
     def get_id_by_partial(self, partial: str) -> UUID | None:
         """Get an OTU ID by a truncated ``partial`` string."""
         cursor = self.con.execute(
-            "SELECT id FROM otus WHERE id LIKE ?",
+            'SELECT id AS "id [uuid]" FROM otus WHERE id LIKE ?',
             (f"{partial}%",),
         )
 
@@ -268,19 +301,19 @@ class Index:
                 raise PartialIDConflictError
 
             if result:
-                return UUID(result[0][0])
+                return result[0][0]
 
         return None
 
     def get_id_by_isolate_id(self, isolate_id: UUID) -> UUID | None:
         """Get an OTU ID from an isolate ID that belongs to it."""
         cursor = self.con.execute(
-            "SELECT otu_id FROM isolates WHERE id = ?",
-            (str(isolate_id),),
+            'SELECT otu_id AS "otu_id [uuid]" FROM isolates WHERE id = ?',
+            (isolate_id,),
         )
 
         if result := cursor.fetchone():
-            return UUID(result[0])
+            return result[0]
 
         return None
 
@@ -290,7 +323,7 @@ class Index:
             raise ValueError("Empty partial given.")
 
         cursor = self.con.execute(
-            "SELECT id FROM isolates WHERE id LIKE ?",
+            'SELECT id AS "id [uuid]" FROM isolates WHERE id LIKE ?',
             (f"{partial}%",),
         )
 
@@ -299,7 +332,7 @@ class Index:
                 raise PartialIDConflictError
 
             if result:
-                return UUID(result[0][0])
+                return result[0][0]
 
         return None
 
@@ -312,22 +345,22 @@ class Index:
         """
         self.con.execute(
             "DELETE FROM events WHERE otu_id = ?",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         self.con.execute(
             "DELETE FROM isolates WHERE otu_id = ?",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         self.con.execute(
             "DELETE FROM otus WHERE id = ?",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         self.con.execute(
             "DELETE FROM sequences WHERE otu_id = ?",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         self.con.commit()
@@ -348,13 +381,16 @@ class Index:
     def iter_minimal_otus(self) -> Iterator[OTUMinimal]:
         """Iterate over minimal representations of all OTUs in the index."""
         rows = self.con.execute(
-            "SELECT acronym, id, legacy_id, name, taxid FROM otus ORDER BY name",
+            """
+            SELECT acronym, id AS "id [uuid]", legacy_id, name, taxid
+            FROM otus ORDER BY name
+            """,
         ).fetchall()
 
         for row in rows:
             yield OTUMinimal(
                 acronym=row[0],
-                id=UUID(row[1]),
+                id=row[1],
                 legacy_id=row[2],
                 name=row[3],
                 taxid=row[4],
@@ -364,10 +400,10 @@ class Index:
         """Get the timestamp of the last event in an update for an OTU."""
         cursor = self.con.execute(
             """
-            SELECT timestamp_complete FROM otu_updates 
+            SELECT timestamp_complete FROM otu_updates
             WHERE otu_id = ? ORDER BY id DESC
             """,
-            (str(otu_id),),
+            (otu_id,),
         )
 
         if result := cursor.fetchone():
@@ -376,7 +412,7 @@ class Index:
         return None
 
     def add_otu_update_history_entry(
-        self, otu_id, timestamp: datetime.datetime
+        self, otu_id: UUID, timestamp: datetime.datetime
     ) -> int | None:
         """Write an entry into the OTU update history."""
         self.con.execute(
@@ -386,24 +422,26 @@ class Index:
             VALUES(?, ?)
             """,
             (
-                str(otu_id),
-                timestamp.isoformat(),
+                otu_id,
+                timestamp,
             ),
         )
 
         cursor = self.con.execute(
             "SELECT id FROM otu_updates WHERE otu_id = ? ORDER BY id DESC",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         if result := cursor.fetchone():
             return result[0]
 
+        return None
+
     def load_snapshot(self, otu_id: UUID) -> Snapshot | None:
         """Load an OTU snapshot."""
         cursor = self.con.execute(
             "SELECT at_event, otu FROM otus WHERE id = ?",
-            (str(otu_id),),
+            (otu_id,),
         )
 
         result = cursor.fetchone()
@@ -413,12 +451,10 @@ class Index:
 
         at_event, otu_json = result
 
-        otu = orjson.loads(otu_json)
+        otu = OTUBuilder.model_validate_json(otu_json)
 
         sequence_ids = [
-            str(sequence["id"])
-            for isolate in otu["isolates"]
-            for sequence in isolate["sequences"]
+            sequence.id for isolate in otu.isolates for sequence in isolate.sequences
         ]
 
         # Fetch all sequences in a single query
@@ -434,14 +470,14 @@ class Index:
         # Update the data structure and check for missing sequences
         missing_sequences = []
 
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence_id = str(sequence["id"])
+        for isolate in otu.isolates:
+            for sequence in isolate.sequences:
+                sequence_id = str(sequence.id)
 
                 if sequence_id in sequence_map:
-                    sequence["sequence"] = sequence_map[sequence_id]
+                    sequence.sequence = sequence_map[sequence_id]
                 else:
-                    missing_sequences.append(sequence_id)
+                    missing_sequences.append(str(sequence_id))
 
         # Raise an error if any sequences are missing
         if missing_sequences:
@@ -460,11 +496,7 @@ class Index:
 
         Only sequences that have changed will be updated.
         """
-        sequence_ids = {
-            str(seq.id) for isolate in otu.isolates for seq in isolate.sequences
-        }
-
-        otu_dict = otu.model_dump(mode="json")
+        sequence_ids = {seq.id for isolate in otu.isolates for seq in isolate.sequences}
 
         placeholders = ",".join("?" for _ in sequence_ids)
 
@@ -473,30 +505,30 @@ class Index:
             f"""
             DELETE FROM sequences WHERE otu_id = ? AND NOT id IN ({ placeholders });
             """,
-            (str(otu.id), *sequence_ids),
+            (otu.id, *sequence_ids),
         )
 
         batch = []
 
         # Insert or update the isolates.
-        for isolate in otu_dict["isolates"]:
+        for isolate in otu.isolates:
             self.con.execute(
                 "INSERT OR REPLACE INTO isolates (id, name, otu_id) VALUES (?, ?, ?)",
                 (
-                    str(isolate["id"]),
-                    str(isolate["name"]),
-                    str(otu_dict["id"]),
+                    isolate.id,
+                    str(isolate.name),
+                    otu.id,
                 ),
             )
 
-            for sequence in isolate["sequences"]:
-                crc = _calculate_crc32(sequence["sequence"])
+            for sequence in isolate.sequences:
+                crc = _calculate_crc32(sequence.sequence)
                 batch.append(
                     (
-                        str(sequence["id"]),
+                        sequence.id,
                         crc,
-                        str(otu.id),
-                        sequence["sequence"],
+                        otu.id,
+                        sequence.sequence,
                     ),
                 )
 
@@ -522,15 +554,15 @@ class Index:
         self.con.execute(
             """
             INSERT OR REPLACE INTO otus (id, acronym, at_event, legacy_id, name, otu, taxid)
-            VALUES (?, ?,?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                str(otu.id),
+                otu.id,
                 otu.acronym,
                 at_event,
                 otu.legacy_id,
                 otu.name,
-                orjson.dumps(otu_dict),
+                otu.model_dump_json(),
                 otu.taxid,
             ),
         )
@@ -576,17 +608,3 @@ def _calculate_crc32(sequence: str) -> str:
 
     # Convert CRC as a hexadecimal string.
     return hex(crc & 0xFFFFFFFF)[2:].zfill(8)
-
-
-def _default_json(obj: Any) -> list:
-    """Cast sets to lists.
-
-    This function is used as the default argument to `orjson.dumps` to handle sets.
-
-    :param obj: the object to serialize
-    :return: the serialized object
-    """
-    if isinstance(obj, set):
-        return list(obj)
-
-    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
