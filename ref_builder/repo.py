@@ -437,7 +437,7 @@ class Repo:
     def create_sequence(
         self,
         otu_id: uuid.UUID,
-        accession: str,
+        accession: str | Accession,
         definition: str,
         legacy_id: str | None,
         segment: uuid.UUID,
@@ -448,15 +448,15 @@ class Repo:
         """
         otu = self.get_otu(otu_id)
 
-        versioned_accession = Accession.from_string(accession)
+        if isinstance(accession, Accession):
+            versioned_accession = accession
+        else:
+            versioned_accession = Accession.from_string(accession)
 
-        if versioned_accession.key in otu.accessions:
-            extant_sequence = otu.get_sequence_by_accession(versioned_accession.key)
-
-            if extant_sequence is not None:
-                raise ValueError(
-                    f"Accession {versioned_accession} already exists in the OTU.",
-                )
+        if versioned_accession in otu.versioned_accessions:
+            raise ValueError(
+                f"Accession {versioned_accession} already exists in the OTU.",
+            )
 
         sequence_id = uuid.uuid4()
 
