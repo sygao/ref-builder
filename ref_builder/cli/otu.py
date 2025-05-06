@@ -35,6 +35,7 @@ from ref_builder.otu.update import (
     auto_update_otu,
     batch_update_repo,
 )
+from ref_builder.otu.validate import check_otu_is_valid
 from ref_builder.plan import SegmentName, SegmentRule
 from ref_builder.repo import Repo, locked_repo
 
@@ -342,6 +343,36 @@ def otu_set_representative_isolate(
     otu_id, isolate_id = get_otu_isolate_ids_from_identifier(repo, isolate_id_)
 
     set_representative_isolate(repo, otu_, isolate_id)
+
+
+@otu.command(name="validate-all")
+@pass_repo
+def otu_validate_all(
+    repo: Repo,
+) -> None:
+    """Check all OTUs in repo for validity."""
+    problematic_otu_ids = set()
+
+    for otu_ in repo.iter_otus():
+        if otu_ is None:
+            logger.error("Missing OTU in iterator.")
+            continue
+
+        if not check_otu_is_valid(otu_):
+            problematic_otu_ids.add(otu_.id)
+
+    if not problematic_otu_ids:
+        logger.info("Repo is clean.")
+
+        sys.exit(0)
+
+    logger.error(
+        "Repo is currently INVALID.",
+        otu_count=len(problematic_otu_ids),
+        problematic_otu_ids=[str(otu_id) for otu_id in problematic_otu_ids]
+    )
+
+    sys.exit(1)
 
 
 @otu.command(name="extend-plan")
