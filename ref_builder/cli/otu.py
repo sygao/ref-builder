@@ -372,6 +372,8 @@ def otu_validate_all(
         problematic_otu_ids=[str(otu_id) for otu_id in problematic_otu_ids]
     )
 
+    click.echo([str(otu_id) for otu_id in problematic_otu_ids])
+
     sys.exit(1)
 
 
