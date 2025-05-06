@@ -552,3 +552,21 @@ class TestExtendPlanCommand:
         assert result.exit_code == 1
 
         print(result.output)
+
+
+class TestValidateAllCommand:
+    """Test that ``ref-builder otu validate-all`` behaves as expected."""
+
+    def test_ok(self, scratch_repo: Repo):
+        result = runner.invoke(
+            otu_command_group,
+            [
+                "--path",
+                str(scratch_repo.path),
+                "validate-all",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        assert "Repo is clean" in result.output
