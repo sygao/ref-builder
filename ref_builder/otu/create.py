@@ -5,7 +5,10 @@ from ref_builder.build import ProductionOTU
 from ref_builder.ncbi.client import NCBIClient
 from ref_builder.ncbi.models import NCBIGenbank, NCBIRank, NCBITaxonomy
 from ref_builder.otu.builders.otu import OTUBuilder
-from ref_builder.otu.isolate import create_sequence_from_record
+from ref_builder.otu.isolate import (
+    create_isolate_from_production_isolate,
+    create_sequence_from_record,
+)
 from ref_builder.otu.utils import (
     assign_records_to_segments,
     create_plan_from_records,
@@ -390,7 +393,7 @@ def create_otu_from_production_otu(
                     raise ValueError("Unnamed segment found in multipartite isolate.")
 
                 segment_name = SegmentName.from_string(production_sequence.segment)
-                segment_id = otu.plan.get_segment_by_name_key(segment_name.key)
+                segment_id = otu.plan.get_segment_by_name_key(segment_name.key).id
 
             sequence = repo.create_sequence(
                 otu.id,
@@ -402,5 +405,9 @@ def create_otu_from_production_otu(
             )
 
             repo.link_sequence(otu.id, isolate.id, sequence.id)
+
+    for production_isolate in production_otu.isolates:
+        if not production_isolate.default:
+            create_isolate_from_production_isolate(repo, otu, production_isolate)
 
     return repo.get_otu(otu.id)
