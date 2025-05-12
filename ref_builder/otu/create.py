@@ -1,6 +1,7 @@
 import structlog
 from pydantic import ValidationError
 
+from ref_builder.build import ProductionOTU
 from ref_builder.ncbi.client import NCBIClient
 from ref_builder.ncbi.models import NCBIGenbank, NCBIRank, NCBITaxonomy
 from ref_builder.otu.builders.otu import OTUBuilder
@@ -13,6 +14,7 @@ from ref_builder.otu.utils import (
     parse_refseq_comment,
 )
 from ref_builder.otu.validators.otu import OTU
+from ref_builder.plan import SegmentName
 from ref_builder.repo import Repo
 from ref_builder.utils import IsolateName
 
@@ -302,3 +304,103 @@ def create_otu_from_json(repo: Repo, json_: str) -> OTUBuilder | None:
             )
 
     return otu_builder
+
+
+def create_otu_from_production_otu(
+    repo: Repo,
+    production_otu: ProductionOTU,
+    acronym: str | None = None,
+    ignore_cache: bool = False,
+) -> OTUBuilder | None:
+    """Take a production OTU and use data to create a new OTU."""
+    otu_logger = logger.bind(taxid=production_otu.taxid, name=production_otu.name)
+
+    representative_isolate = production_otu.isolates[0]
+    if not representative_isolate.default:
+        for isolate in production_otu.isolates:
+            if isolate.default:
+                representative_isolate = isolate
+                break
+
+    rep_accessions = [
+        sequence.accession for sequence in representative_isolate.sequences
+    ]
+
+    if not representative_isolate.default:
+        otu_logger.warning(
+            "No representative isolate present. First isolate will be used instead.",
+            isolate_source_name=representative_isolate.source_name,
+            isolate_source_type=representative_isolate.source_type,
+        )
+
+    client = NCBIClient(ignore_cache)
+
+    records = client.fetch_genbank_records(rep_accessions)
+
+    binned_records = group_genbank_records_by_isolate(records)
+
+    if len(binned_records) > 1:
+        otu_logger.fatal(
+            "More than one isolate found. Cannot create plan.",
+        )
+        return None
+
+    isolate_name = next(iter(binned_records.keys())) if binned_records else None
+
+    plan = create_plan_from_records(
+        records,
+        length_tolerance=repo.settings.default_segment_length_tolerance,
+    )
+
+    if plan is None:
+        logger.fatal("Could not create plan from records.")
+
+    molecule = get_molecule_from_records(records)
+
+    with repo.use_transaction():
+        try:
+            otu = repo.create_otu(
+                acronym=production_otu.abbreviation if acronym is None else acronym,
+                legacy_id=production_otu.id,
+                molecule=molecule,
+                name=production_otu.name,
+                plan=plan,
+                taxid=production_otu.taxid,
+            )
+        except ValueError as e:
+            otu_logger.fatal(e)
+            sys.exit(1)
+
+        isolate = repo.create_isolate(
+            otu_id=otu.id,
+            legacy_id=representative_isolate.id,
+            name=isolate_name,
+        )
+
+        otu.representative_isolate = repo.set_representative_isolate(
+            otu_id=otu.id, isolate_id=isolate.id
+        )
+
+        for production_sequence in representative_isolate.sequences:
+            if production_sequence.segment == "Unnamed":
+                segment_id = otu.plan.segments[0].id
+
+            else:
+                if not representative_isolate.default:
+                    raise ValueError("Unnamed segment found in multipartite isolate.")
+
+                segment_name = SegmentName.from_string(production_sequence.segment)
+                segment_id = otu.plan.get_segment_by_name_key(segment_name.key)
+
+            sequence = repo.create_sequence(
+                otu.id,
+                accession=production_sequence.accession,
+                legacy_id=production_sequence.id,
+                definition=production_sequence.definition,
+                segment=segment_id,
+                sequence=production_sequence.sequence,
+            )
+
+            repo.link_sequence(otu.id, isolate.id, sequence.id)
+
+    return repo.get_otu(otu.id)
