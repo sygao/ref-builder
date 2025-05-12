@@ -2,6 +2,7 @@ from uuid import UUID
 
 from structlog import get_logger
 
+from ref_builder.build import ProductionIsolate
 from ref_builder.ncbi.models import NCBIGenbank
 from ref_builder.otu.builders.isolate import IsolateBuilder
 from ref_builder.otu.builders.otu import OTUBuilder
@@ -13,9 +14,9 @@ from ref_builder.otu.utils import (
     group_genbank_records_by_isolate,
     parse_refseq_comment,
 )
-from ref_builder.plan import PlanConformationError
+from ref_builder.plan import PlanConformationError, SegmentName
 from ref_builder.repo import Repo
-from ref_builder.utils import IsolateName
+from ref_builder.utils import IsolateName, IsolateNameType
 
 logger = get_logger("otu.isolate")
 
@@ -206,6 +207,54 @@ def create_isolate(
     log.info("Isolate created", id=str(isolate.id))
 
     return isolate
+
+
+def create_isolate_from_production_isolate(
+    repo: Repo,
+    otu: OTUBuilder,
+    production_isolate: ProductionIsolate,
+) -> IsolateBuilder | None:
+    """Add datat from a production isolate to an extant OTU."""
+    isolate_name = None
+    if production_isolate.source_name != "unknown":
+        isolate_name = IsolateName(
+            type=IsolateNameType(production_isolate.source_type),
+            value=production_isolate.source_name,
+        )
+
+    with repo.use_transaction():
+        isolate = repo.create_isolate(
+            otu.id,
+            legacy_id=None,
+            name=isolate_name,
+        )
+
+        for production_sequence in production_isolate.sequences:
+            if production_sequence.segment == "Unnamed":
+                segment_id = otu.plan.segments[0].id
+
+            else:
+                segment_name = SegmentName.from_string(production_sequence.segment)
+                segment_id = otu.plan.get_segment_by_name_key(segment_name.key).id
+
+            sequence = repo.create_sequence(
+                otu.id,
+                accession=production_sequence.accession,
+                legacy_id=production_sequence.id,
+                definition=production_sequence.definition,
+                segment=segment_id,
+                sequence=production_sequence.sequence,
+            )
+
+            repo.link_sequence(otu.id, isolate.id, sequence.id)
+
+        logger.info(
+            "Isolate created",
+            isolate_id=str(isolate.id),
+            legacy_isolate_id=production_isolate.id,
+        )
+
+    return repo.get_isolate(isolate.id)
 
 
 def create_sequence_from_record(
