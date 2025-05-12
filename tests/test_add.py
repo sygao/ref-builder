@@ -3,8 +3,10 @@ from structlog.testing import capture_logs
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
+from ref_builder.build import ProductionOTU
 from ref_builder.otu.create import (
     create_otu_from_json,
+    create_otu_from_production_otu,
     create_otu_with_taxid,
     create_otu_without_taxid,
 )
@@ -17,6 +19,7 @@ from ref_builder.otu.update import (
     update_isolate_from_accessions,
 )
 from ref_builder.otu.utils import RefSeqConflictError
+from ref_builder.otu.validate import get_validated_otu
 from ref_builder.repo import Repo
 from ref_builder.utils import IsolateName, IsolateNameType
 
@@ -476,3 +479,18 @@ class TestImportOTU:
                 empty_repo.get_otu_by_taxid(mini_scratch_otu.taxid).taxid
                 == mini_scratch_otu.taxid
             )
+
+
+class TestImportFromProductionReference:
+    def test_ok(self, scratch_repo: Repo, precached_repo: Repo):
+        production_otus = [
+            ProductionOTU.build_from_validated_otu(get_validated_otu(scratch_otu))
+            for scratch_otu in scratch_repo.iter_otus()
+        ]
+
+        with precached_repo.lock():
+            for production_otu in production_otus:
+                assert create_otu_from_production_otu(precached_repo, production_otu) is not None
+
+        for otu_metadata in precached_repo.iter_minimal_otus():
+            assert scratch_repo.get_otu_by_taxid(otu_metadata.taxid) is not None
