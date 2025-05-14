@@ -675,6 +675,27 @@ class TestGetOTU:
 
         assert empty_repo.last_id == 9
 
+    def test_acronym_ok(self, initialized_repo: Repo):
+        """Test that getting an OTU ID from the exact acronym of the OTU returns the expected ID."""
+        otu = next(initialized_repo.iter_otus())
+
+        assert initialized_repo.get_otu_id_by_acronym("TMV") == otu.id
+
+    def test_acronym_fail(self, initialized_repo: Repo):
+        """Test that a non-matching acronym cannot retrieve the OTU ID"""
+        assert initialized_repo.get_otu_id_by_acronym("TM") is None
+
+        assert initialized_repo.get_otu_id_by_acronym("TMVV") is None
+
+    def test_acronym_empty_fail(self, initialized_repo: Repo):
+        """Test that an attempt to search indexed OTUs using an empty acronym
+        logs an error message and returns None.
+        """
+        with capture_logs() as logs:
+            assert initialized_repo.get_otu_id_by_acronym("") is None
+
+        assert any(["Bad input" in log["event"] for log in logs])
+
     def test_partial_ok(self, initialized_repo: Repo):
         """Test that getting an OTU ID starting with a truncated 8-character portion
         returns an ID.
