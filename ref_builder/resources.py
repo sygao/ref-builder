@@ -31,3 +31,6 @@ class RepoSettings(BaseModel):
     """The deviation a sequence is allowed from its plan segment's length before it
     fails validation.
     """
+
+    species_otus_only: bool = False
+    """Whether OTUs ranking below OTU can pass validation."""
