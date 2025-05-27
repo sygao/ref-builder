@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from structlog import get_logger
 
 from ref_builder.ncbi.client import NCBIClient
+from ref_builder.ncbi.models import NCBITaxonomy
 from ref_builder.otu.builders.otu import OTUBuilder
 from ref_builder.otu.builders.sequence import SequenceBuilder
 from ref_builder.otu.utils import (
@@ -78,6 +79,7 @@ def allow_accessions_into_otu(
             excluded_accessions=sorted(excluded_accessions),
         )
 
+
 def update_otu_identifiers(
     repo: Repo,
     otu: OTUBuilder,
@@ -108,6 +110,11 @@ def update_otu_identifiers(
         repo.update_otu_identifiers(
             otu_id=otu.id, taxid=taxonomy.id, name=taxonomy.name
         )
+    return replace_otu_taxonomy_from_record(
+        repo,
+        otu,
+        taxonomy,
+    )
 
     return repo.get_otu(otu.id)
 
@@ -388,3 +395,94 @@ def set_representative_isolate(
     )
 
     return new_representative_isolate.id
+
+
+def replace_otu_taxonomy_from_record(
+    repo: Repo, otu: OTUBuilder, taxon_record: NCBITaxonomy
+) -> OTUBuilder | None:
+    """Replace an OTU taxonomy data using a given NCBI taxonomy record."""
+    with repo.use_transaction():
+        repo.update_otu_identifiers(
+            otu_id=otu.id, taxid=taxon_record.id, name=taxon_record.name
+        )
+
+    return repo.get_otu(otu.id)
+
+
+def fetch_taxonomy_based_on_otu_contents(
+    otu: OTUBuilder, ignore_cache: bool = False
+) -> NCBITaxonomy:
+    """Given an OTU, fetch a taxonomy record based on its contents."""
+    ncbi = NCBIClient(ignore_cache)
+    rep_isolate = otu.get_isolate(otu.representative_isolate)
+
+    records = ncbi.fetch_genbank_records(rep_isolate.accessions)
+
+    record_taxid = records[0].source.taxid
+
+    return ncbi.fetch_taxonomy_record(record_taxid)
+
+
+def correct_otu_ranks(repo: Repo, ignore_cache: bool = False) -> None:
+    """Correct OTU metadata if the Taxonomy rank is above or below species-level."""
+    ncbi = NCBIClient(ignore_cache)
+
+    sub_species_taxids = set()
+    over_ranked_taxids = set()
+
+    updated_otu_ids = set()
+
+    for otu in repo.iter_otus():
+        try:
+            taxon_record = ncbi.fetch_taxonomy_record(otu.taxid)
+        except TaxonLevelError:
+            logger.warning(
+                "OTU is too high level to work with.",
+                msg=str(TaxonLevelError),
+            )
+
+            over_ranked_taxids.add(otu.taxid)
+
+            taxon_record = fetch_taxonomy_based_on_otu_contents(otu, ignore_cache)
+
+        if taxon_record.rank != "species":
+            logger.debug(
+                "OTU has a sub-species level taxonomy listing.",
+                rank=taxon_record.rank,
+                species=taxon_record.species,
+            )
+            sub_species_taxids.add(otu.taxid)
+
+            logger.debug(
+                "Fetching species-level taxonomy...",
+                species_taxid=taxon_record.species.id,
+                species_name=taxon_record.species.name,
+            )
+
+            species_taxon_record = ncbi.fetch_taxonomy_record(taxon_record.species.id)
+
+            logger.debug(
+                "Updating OTU with new Taxonomy data...",
+                otu_id=otu.id,
+                current_name=otu.name,
+                current_taxid=otu.taxid,
+                new_name=species_taxon_record.name,
+                new_taxid=species_taxon_record.id,
+            )
+
+            updated_otu = replace_otu_taxonomy_from_record(
+                repo,
+                otu=otu,
+                taxon_record=species_taxon_record,
+            )
+
+            if updated_otu is not None:
+                updated_otu_ids.add(updated_otu.id)
+
+    if updated_otu_ids:
+        logger.info(
+            "OTU identifiers updated",
+            otu_ids=updated_otu_ids,
+            over_ranked_count=len(over_ranked_taxids),
+            sub_species_count=len(sub_species_taxids),
+        )
